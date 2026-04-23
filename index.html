@@ -75,7 +75,7 @@
     <div style="margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
         <strong>ĐIỀU KHIỂN:</strong> Tháng: <select id="m"></select> Năm: <select id="y"></select>
         <span style="margin-left: 20px;">
-            <span style="color: red;">■</span> CN | <span style="color: #ffd700;">■</span> Lễ | <span style="color: green;">■</span> Đặc biệt | <span style="background:#333; color:yellow; padding:0 3px;">n</span> Làm đêm | <span color:yellow; padding:0 3px;">x</span> Làm ngày
+            <span style="color: red;">■</span> CN | <span style="color: #ffd700;">■</span> Lễ | <span style="color: green;">■</span> Đặc biệt | <span style="background:#cc99ff;">■</span> Hôm nay | <span style="background:#333; color:yellow; padding:0 3px;">n</span> Làm đêm | <span >x</span> Làm ngày
         </span>
         <button onclick="clearUserData()" style="float:right; cursor:pointer; background:#ff4d4d; color:white; border:none; padding:3px 10px; font-size:10px; margin-left: 10px;">Xóa dữ liệu cũ</button>
         <span id="userNameDisplay" style="float:right; font-weight:bold; color:#00b050;"></span>
@@ -94,30 +94,35 @@
             <table>
                 <tr class="header-gray"><td colspan="2">1. THU NHẬP</td></tr>
                 <tr><td>1 Lương ngày</td><td><input id="v1" class="num" readonly></td></tr>
-                <tr><td>2 Lương đêm</td><td><input id="v2" class="num" value="0"></td></tr>
-                <tr><td>3 Đi làm ngày nghỉ</td><td><input id="v3" class="num" value="0"></td></tr>
-                <tr><td>4 Tăng ca 150%</td><td><input id="v4" class="num" readonly></td></tr>
-                <tr><td>5 Tăng ca 195%</td><td><input id="v5" class="num" value="0"></td></tr>
-                <tr><td>6 Tăng ca 200%</td><td><input id="v6" class="num" value="0"></td></tr>
-                <tr><td>7 Tăng ca 150% (đ)</td><td><input id="v7" class="num" value="0"></td></tr>
-                <tr><td>8 Tăng ca 260%</td><td><input id="v8" class="num" value="0"></td></tr>
-                <tr><td>9 Tăng ca 400% (đ)</td><td><input id="v9" class="num" value="0"></td></tr>
-                <tr><td>10 Tăng ca 600% (đ)</td><td><input id="v10" class="num" value="0"></td></tr>
-                <tr><td>11 Tăng ca 600%</td><td><input id="v11" class="num" value="0"></td></tr>
-                <tr><td>12 Tăng ca 605%</td><td><input id="v12" class="num" value="0"></td></tr>
-                <tr><td>13 Lương 70%</td><td><input id="v13" class="num" value="0"></td></tr>
-                <tr><td>14 Bù lương</td><td><input id="v14" class="num" value="0"></td></tr>
-                <tr><td>15 Phụ cấp Xăng</td><td><input id="v15" class="num" value="0"></td></tr>
-                <tr><td>16 Phụ cấp nhà</td><td><input id="v16" class="num" value="0"></td></tr>
-                <tr><td>17 Phụ cấp CC</td><td><input id="v17" class="num" value="0"></td></tr>
-                <tr><td>18 PC Ca đêm </td><td><input id="v18" class="num" readonly></td></tr>
-                <tr><td>19 PC Tiền ăn</td><td><input id="v19" class="num" value="0"></td></tr>
-                <tr><td>20 PC Con nhỏ</td><td><input id="v20" class="num" value="0"></td></tr>
-                <tr><td>21 PC Kiểm kinh</td><td><input id="v21" class="num" value="0"></td></tr>
-                <tr><td>22 PC Bằng cấp</td><td><input id="v22" class="num" value="0"></td></tr>
-                <tr><td>23 TN khác </td><td><input id="v23" class="num" readonly></td></tr>
-                <tr><td>24 TN khác (sau thuế)</td><td><input id="v24" class="num" value="0"></td></tr>
-                <tr><td>25 Tiền Phép năm</td><td><input id="v25" class="num" value="0"></td></tr>
+                <tr><td>2 Lương đêm</td><td><input id="v2" class="num" readonly></td></tr>
+                <tr><td>3 Đi làm ngày nghỉ</td><td><input id="v3" class="num" readonly></td></tr>
+                <tr><td>4 Tăng ca ngày 150%</td><td><input id="v4" class="num" readonly></td></tr>
+                <tr><td>5 Tăng ca đêm 215%</td><td><input id="v5" class="num" readonly></td></tr>
+                <tr><td>6 Ngoài giờ ca A- ca B 150%</td><td><input id="v6_1" class="num" readonly></td></tr>
+                <tr><td>7 Ngoài giờ ca A 215%</td><td><input id="v6_2" class="num" readonly></td></tr>
+                <tr><td>8 Ngoài giờ ca A 200%</td><td><input id="v6_3" class="num" readonly></td></tr>
+                <tr><td>9 Trong giờ ca B 150%</td><td><input id="v6_4" class="num" readonly></td></tr>
+                <tr><td>10 Trong giờ ca B 300%</td><td><input id="v6_5" class="num" readonly></td></tr>
+                <tr><td>11 Ngoài giờ ca A- ca B 300%</td><td><input id="v6_6" class="num" readonly></td></tr>
+                <tr><td>12 Ngoài giờ ca A 410%</td><td><input id="v6_7" class="num" readonly></td></tr>
+                <tr><td>13 Ngoài giờ ca A 400%</td><td><input id="v6_8" class="num" readonly></td></tr>
+                <tr><td>14 Trong giờ ca B 600%</td><td><input id="v6_9" class="num" readonly></td></tr>
+                <tr><td>15 Ngoài giờ ca A- ca B 600%</td><td><input id="v6_10" class="num" readonly></td></tr>
+                <tr><td>16 Ngoài giờ ca A 605%</td><td><input id="v6_11" class="num" readonly></td></tr>
+                <tr><td>17 Phúc lợi tăng ca trên 2h</td><td><input id="v6_12" class="num" readonly></td></tr>
+                <tr><td>18 Lương 70%</td><td><input id="v13" class="num" readonly></td></tr>
+                <tr><td>19 Bù lương</td><td><input id="v14" class="num" value="0"></td></tr>
+                <tr><td>20 Phụ cấp Xăng</td><td><input id="v15" class="num" value="0"></td></tr>
+                <tr><td>21 Phụ cấp nhà</td><td><input id="v16" class="num" value="0"></td></tr>
+                <tr><td>22 Phụ cấp CC</td><td><input id="v17" class="num" value="0"></td></tr>
+                <tr><td>23 PC Ca đêm </td><td><input id="v18" class="num" readonly></td></tr>
+                <tr><td>24 PC Tiền ăn</td><td><input id="v19" class="num" value="0"></td></tr>
+                <tr><td>25 PC Con nhỏ</td><td><input id="v20" class="num" value="0"></td></tr>
+                <tr><td>26 PC Kiểm kinh</td><td><input id="v21" class="num" value="0"></td></tr>
+                <tr><td>27 PC Bằng cấp</td><td><input id="v22" class="num" value="0"></td></tr>
+                <tr><td>28 TN khác </td><td><input id="v23" class="num" readonly></td></tr>
+                <tr><td>29 TN khác (sau thuế)</td><td><input id="v24" class="num" value="0"></td></tr>
+                <tr><td>30 Tiền Phép năm</td><td><input id="v25" class="num" value="0"></td></tr>
             </table>
         </div>
 
@@ -132,8 +137,8 @@
                 <tr><td>38 Thuế TNCN</td><td><input id="v38" class="num" readonly></td></tr>
                 <tr><td>39 Nợ BHYT</td><td><input id="v39" class="num" value="0"></td></tr>
                 <tr><td>40 Tạm ứng</td><td><input id="v40" class="num" value="0"></td></tr>
-                <tr><td>41 Trừ khác (TT)</td><td><input id="v41" class="num" value="0"></td></tr>
-                <tr><td>42 Trừ khác (ST)</td><td><input id="v42" class="num" value="0"></td></tr>
+                <tr><td>41 Thu nhập khác (Trước thuế)</td><td><input id="v41" class="num" value="0"></td></tr>
+                <tr><td>42 Thu nhập khác (Sau thuế)</td><td><input id="v42" class="num" value="0"></td></tr>
                 <tr class="header-gray"><td colspan="2">KẾT QUẢ THUẾ</td></tr>
                 <tr><td>TN chịu thuế</td><td><input id="taxI" class="num" readonly></td></tr>
                 <tr style="background:#eefbff;"><td><b>Thuế suất (%)</b></td><td><input id="taxRate" class="num" readonly style="color:blue; font-weight:bold;"></td></tr>
@@ -160,18 +165,23 @@
                 <tr><td>b Công đêm (n)</td><td><input id="dB" readonly> Ngày</td></tr>
                 <tr><td>c Giờ công đêm</td><td><input id="dC" value="0"> Giờ</td></tr>
                 <tr><td>d Công ngày nghỉ</td><td><input id="dD" readonly> Giờ</td></tr>
-                <tr><td>e Tăng ca 150%</td><td><input id="dE" readonly> Giờ</td></tr>
-                <tr><td>f Tăng ca 215%</td><td><input id="dF" value="0"> Giờ</td></tr>
-                <tr><td>g Tăng ca 200%</td><td><input id="dG" value="0"> Giờ</td></tr>
-                <tr><td>h Tăng ca 150%</td><td><input id="dH" value="0"> Giờ</td></tr>
-                <tr><td>j Tăng ca 300%</td><td><input id="dJ" value="0"> Giờ</td></tr>
-                <tr><td>k Tăng ca 400%</td><td><input id="dK" value="0"> Giờ</td></tr>
-                <tr><td>l Tăng ca 600%</td><td><input id="dL" value="0"> Giờ</td></tr>
-                <tr><td>m Tăng ca 600%</td><td><input id="dM" value="0"> Giờ</td></tr>
-                <tr><td>n Tăng ca 605%</td><td><input id="dN" value="0"> Giờ</td></tr>
-                <tr><td>o Lương 70%</td><td><input id="dO" value="0"> Giờ</td></tr>
-                <tr><td>p Trễ, Sớm</td><td><input id="dP" value="0"> Giờ</td></tr>
-                <tr><td>q Nghỉ ko lương</td><td><input id="dQ" value="0"> Ngày</td></tr>
+                <tr><td>e Tăng ca ngày 150%</td><td><input id="dE" readonly> Giờ</td></tr>
+                <tr><td>f Tăng ca đêm 215%</td><td><input id="dF" value="0"> Giờ</td></tr>
+                <tr><td>g Ngoài giờ ca A-ca B 150%</td><td><input id="dG_1" value="0"> Giờ</td></tr>
+                <tr><td>h Ngoài giờ ca A 215%</td><td><input id="dG_2" value="0"> Giờ</td></tr>
+                <tr><td>i Trong giờ ca A 200%</td><td><input id="dG_3" value="0"> Giờ</td></tr>
+                <tr><td>j Trong giờ ca B 150%</td><td><input id="dG_4" value="0"> Giờ</td></tr>
+                <tr><td>k Trong giờ ca B 300%</td><td><input id="dG_5" value="0"> Giờ</td></tr>
+                <tr><td>l Ngoài giờ ca A- ca B 300%</td><td><input id="dG_6" value="0"> Giờ</td></tr>
+                <tr><td>m Ngoài giờ ca A 410%</td><td><input id="dG_7" value="0"> Giờ</td></tr>
+                <tr><td>n Trong giờ ca A 400%</td><td><input id="dG_8" value="0"> Giờ</td></tr>
+                <tr><td>o Trong giờ ca B 600%</td><td><input id="dG_9" value="0"> Giờ</td></tr>
+                <tr><td>p Ngoài giờ ca A- ca B 600%</td><td><input id="dG_10" value="0"> Giờ</td></tr>
+                <tr><td>q Ngoài giờ ca A 605%</td><td><input id="dG_11" value="0"> Giờ</td></tr>
+                <tr><td>r Phúc lợi tăng ca trên 2h</td><td><input id="dG_12" value="0"> Giờ</td></tr>
+                <tr><td>s Lương 70%</td><td><input id="dO" value="0"> Giờ</td></tr>
+                <tr><td>t Trễ, Sớm</td><td><input id="dP" value="0"> Giờ</td></tr>
+                <tr><td>u Nghỉ ko lương</td><td><input id="dQ" value="0"> Ngày</td></tr>
             </table>
         </div>
     </div>
@@ -185,7 +195,7 @@
 <script>
     // --- KHU VỰC ADMIN ---
     const USERS_LIST = {
-        'ADMIN001': 'Chủ hệ thống',
+        'ADMIN001': 'Trần Tuấn Linh',
         'NV12345': 'Nguyễn Văn A',
         'NV67890': 'Trần Thị B'
     };
@@ -221,11 +231,13 @@
     const GREEN = ["10-1", "24-1", "14-2", "21-2", "14-3", "28-3", "11-4", "28-4", "29-4", "2-5", "16-5", "30-5", "13-6", "27-6", "11-7", "25-7", "8-8", "13-8", "14-8", "15-8", "29-8", "31-8", "12-9", "26-9", "10-10", "25-10", "7-11", "21-11", "5-12", "19-12", "30-12", "31-12"];
 
     const ms = document.getElementById('m'), ys = document.getElementById('y');
-    for(let i=1; i<=12; i++) ms.innerHTML += `<option value="${i}" ${i==5?'selected':''}>${i}</option>`;
-    for(let i=2024; i<=2030; i++) ys.innerHTML += `<option value="${i}" ${i==2026?'selected':''}>${i}</option>`;
+    for(let i=1; i<=12; i++) ms.innerHTML += `<option value="${i}" ${i==new Date().getMonth()+1?'selected':''}>${i}</option>`;
+    for(let i=2024; i<=2030; i++) ys.innerHTML += `<option value="${i}" ${i==new Date().getFullYear()?'selected':''}>${i}</option>`;
 
     function getCls(d, m, y) {
+        const now = new Date();
         const ds = `${d}-${m}`;
+        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return 'tod';
         if(YELLOW.includes(ds)) return 'hol';
         if(GREEN.includes(ds)) return 'spe';
         if(new Date(y, m-1, d).getDay()===0) return 'sun';
@@ -256,6 +268,9 @@
             calc();
         }));
         document.querySelectorAll('.oin').forEach(i => i.addEventListener('input', calc));
+        
+        // Gán sự kiện cho các ô nhập liệu mới trong cột 4
+        document.querySelectorAll('.col input').forEach(i => i.addEventListener('input', calc));
         calc();
     }
 
@@ -295,24 +310,46 @@
         document.getElementById('v23').value = tienAnDem.toLocaleString();
 
         const bSal = parseN('bSal'), iSal = parseN('iSal'), std = parseN('sDay') || 26;
-        const sD = (bSal/std) * cNgay, sN = (bSal/std) * cDem, sNghi = (bSal/std/8) * 2.0 * cNghi, sO = (bSal/std/8) * 1.5 * to;
+        const perH = bSal/std/8;
+
+        const sD = (bSal/std) * cNgay, sN = (bSal/std) * cDem, sNghi = perH * 2.0 * cNghi, sO = perH * 1.5 * to;
         
         document.getElementById('v1').value = Math.round(sD).toLocaleString();
         document.getElementById('v2').value = Math.round(sN).toLocaleString();
         document.getElementById('v3').value = Math.round(sNghi).toLocaleString();
         document.getElementById('v4').value = Math.round(sO).toLocaleString();
+
+        // TÍNH TOÁN CÁC MỤC TĂNG CA MỚI (ID dG_1 -> dG_12 ứng với v6_1 -> v6_12)
+        const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.0]; // r cuối là phúc lợi giả định hệ số 1
+        let totalTC_New = 0;
+        for(let j=1; j<=12; j++){
+            let hours = parseN('dG_'+j);
+            let val = Math.round(hours * perH * rates[j-1]);
+            document.getElementById('v6_'+j).value = val.toLocaleString();
+            totalTC_New += val;
+        }
+
+        // Tăng ca đêm 215% (v5) dựa trên dF
+        let sTC_Dem = Math.round(parseN('dF') * perH * 2.15);
+        document.getElementById('v5').value = sTC_Dem.toLocaleString();
+
+        // Lương 70% (v13) dựa trên dO
+        let s70 = Math.round(parseN('dO') * perH * 0.7);
+        document.getElementById('v13').value = s70.toLocaleString();
         
         const bhxh = Math.round(iSal*0.08), bhyt = Math.round(iSal*0.015), bhtn = Math.round(iSal*0.01);
         document.getElementById('v33').value = bhxh.toLocaleString();
         document.getElementById('v34').value = bhyt.toLocaleString();
         document.getElementById('v35').value = bhtn.toLocaleString();
 
-        let thuNhapChung = sD + sN + sNghi + sO + parseN('v5') + parseN('v6') + parseN('v7') + parseN('v8') + parseN('v9') + parseN('v10') + parseN('v11') + parseN('v12') + parseN('v13') + parseN('v14');
+        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14');
         let phuCapChung = parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31') + parseN('v32');
         let muc20 = parseN('v20');
 
-        document.getElementById('taxI').value = Math.round(thuNhapChung + phuCapChung + pcCaDem + tienAnDem - (bhxh+bhyt+bhtn)).toLocaleString();
-        let tnTinhThue = thuNhapChung + phuCapChung + pcCaDem + tienAnDem - (bhxh+bhyt+bhtn) - 15500000 - (6200000 * (muc20 / 150000));
+        let tnTruocThue = thuNhapChung + phuCapChung + pcCaDem + tienAnDem - (bhxh+bhyt+bhtn);
+        document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
+        
+        let tnTinhThue = tnTruocThue - 11000000 - (4400000 * (muc20 / 150000)); // Giả định mức giảm trừ 
         
         let rate = "0%"; let tienThue = 0;
         if (tnTinhThue > 0) {

@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V31</title>
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V31 (Cloud Sync)</title>
     <style>
         :root {
             --bg-header: #c6efce;
@@ -202,6 +202,11 @@
 
     let currentUser = '';
 
+    // ================= ĐÃ TÍCH HỢP LINK GOOGLE SHEETS CỦA BẠN =================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUH3godNdgOhHw0tNt0nOT4bJ9s0XXaVUovoCrF2hl8RHk7KymYK-fP5htWtHKpGHy/exec";
+    let syncTimer = null;
+    // ==========================================================================
+
     function toggleViewPass() {
         const p = document.getElementById('passKey');
         p.type = p.type === 'password' ? 'text' : 'password';
@@ -380,6 +385,7 @@
         saveData(); 
     }
 
+    // --- SỬA HÀM LƯU ĐỂ ĐỒNG BỘ CLOUD ---
     function saveData() {
         if (!currentUser) return;
         const data = {};
@@ -387,13 +393,56 @@
         const att = [];
         document.querySelectorAll('.win').forEach((el, i) => { att.push({ w: el.value, o: document.querySelectorAll('.oin')[i].value }); });
         data.att = att; data.m = ms.value; data.y = ys.value;
+        
+        // 1. Lưu tạm vào máy (Local Storage)
         localStorage.setItem('db_user_' + currentUser, JSON.stringify(data));
+
+        // 2. Lưu lên Đám Mây (Google Sheets)
+        if(SCRIPT_URL.startsWith("http")) {
+            clearTimeout(syncTimer);
+            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser] + " (Đang lưu...)";
+            syncTimer = setTimeout(() => {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                    body: JSON.stringify({ user: currentUser, data: JSON.stringify(data) })
+                }).then(() => {
+                    document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser] + " (Đã đồng bộ ✓)";
+                }).catch(err => {
+                    document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser] + " (Lỗi mạng - Lưu nháp)";
+                });
+            }, 1000);
+        }
     }
 
+    // --- SỬA HÀM TẢI ĐỂ LẤY DỮ LIỆU TỪ CLOUD ---
     function loadSavedData() {
-        const saved = localStorage.getItem('db_user_' + currentUser);
-        if(!saved) return;
-        const data = JSON.parse(saved);
+        if (!currentUser) return;
+        let btn = document.getElementById('userNameDisplay');
+        btn.innerText = "Đang tải từ Cloud...";
+
+        if(SCRIPT_URL.startsWith("http")) {
+            fetch(SCRIPT_URL + "?user=" + currentUser)
+            .then(res => res.json())
+            .then(resData => {
+                if(resData.data) { 
+                    applyData(JSON.parse(resData.data)); 
+                    btn.innerText = "User: " + USERS_LIST[currentUser] + " (Cloud ✓)"; 
+                }
+                else { loadLocalFallback(btn); }
+            }).catch(err => { loadLocalFallback(btn); });
+        } else {
+            loadLocalFallback(btn);
+        }
+    }
+
+    function loadLocalFallback(btn) {
+        let saved = localStorage.getItem('db_user_' + currentUser);
+        if(saved) applyData(JSON.parse(saved));
+        btn.innerText = "User: " + USERS_LIST[currentUser] + " (Offline Mode)";
+    }
+
+    function applyData(data) {
         ms.value = data.m; ys.value = data.y;
         render(); 
         for(let id in data) { let el = document.getElementById(id); if(el && id !== 'att') el.value = data[id]; }

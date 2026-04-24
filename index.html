@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lương Chính Xác 100%</title>
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V31</title>
     <style>
         :root {
             --bg-header: #c6efce;
@@ -234,24 +234,15 @@
     for(let i=1; i<=12; i++) ms.innerHTML += `<option value="${i}" ${i==new Date().getMonth()+1?'selected':''}>${i}</option>`;
     for(let i=2024; i<=2030; i++) ys.innerHTML += `<option value="${i}" ${i==new Date().getFullYear()?'selected':''}>${i}</option>`;
 
-function getCls(d, m, y) {
-    const now = new Date();
-    const ds_with_year = `${d}-${m}-${y}`; // Chuỗi đầy đủ: "24-4-2026"
-    
-    // 1. Kiểm tra ngày hôm nay (màu tím)
-    if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return 'tod';
-    
-    // 2. Kiểm tra ngày lễ trong mảng YELLOW (màu vàng)
-    if(YELLOW.includes(ds_with_year)) return 'hol';
-    
-    // 3. Kiểm tra ngày đặc biệt trong mảng GREEN (màu xanh lá)
-    if(GREEN.includes(ds_with_year)) return 'spe';
-    
-    // 4. Kiểm tra ngày Chủ Nhật (màu đỏ)
-    if(new Date(y, m-1, d).getDay() === 0) return 'sun';
-    
-    return '';
-}
+    function getCls(d, m, y) {
+        const now = new Date();
+        const ds_with_year = `${d}-${m}-${y}`;
+        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return 'tod';
+        if(YELLOW.includes(ds_with_year)) return 'hol';
+        if(GREEN.includes(ds_with_year)) return 'spe';
+        if(new Date(y, m-1, d).getDay() === 0) return 'sun';
+        return '';
+    }
     
     function render() {
         const m = parseInt(ms.value), y = parseInt(ys.value);
@@ -277,7 +268,6 @@ function getCls(d, m, y) {
             calc();
         }));
         document.querySelectorAll('.oin').forEach(i => i.addEventListener('input', calc));
-        
         document.querySelectorAll('.col input').forEach(i => i.addEventListener('input', calc));
         calc();
     }
@@ -290,7 +280,7 @@ function getCls(d, m, y) {
     function calc() {
         let cNgay = 0, cDem = 0, cNghi = 0, tienAnDem = 0;
         let totalOT_Row = 0;
-        let totalPhucLoi_R = 0; // Tổng giờ ô r
+        let totalPhucLoi_R = 0;
 
         const wins = document.querySelectorAll('.win');
         const oins = document.querySelectorAll('.oin');
@@ -300,10 +290,9 @@ function getCls(d, m, y) {
             let cls = i.getAttribute('data-cls');
             let otVal = parseFloat(oins[idx].value) || 0;
 
-            // Xử lý logic trích 0.5h từ OT > 2h vào ô r
             if(otVal > 2) {
                 totalPhucLoi_R += 0.5;
-                totalOT_Row += (otVal - 0.5); // Trừ bớt 0.5h khỏi cột tăng ca chính
+                totalOT_Row += (otVal - 0.5);
             } else {
                 totalOT_Row += otVal;
             }
@@ -324,11 +313,11 @@ function getCls(d, m, y) {
         document.getElementById('dD').value = cNghi;
         document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toFixed(1); 
         
-        // Hiển thị kết quả vào mục chi tiết công
         document.getElementById('dE').value = totalOT_Row;
         document.getElementById('dG_12').value = totalPhucLoi_R;
 
-        let pcCaDem = cDem * 25000;
+        // Cập nhật: Phụ cấp ca đêm = Công đêm * 25,000
+        let pcCaDem = cDem * 25000; 
         document.getElementById('v18').value = pcCaDem.toLocaleString();
         document.getElementById('v23').value = tienAnDem.toLocaleString();
 
@@ -342,8 +331,7 @@ function getCls(d, m, y) {
         document.getElementById('v3').value = Math.round(sNghi).toLocaleString();
         document.getElementById('v4').value = Math.round(sO).toLocaleString();
 
-        // TÍNH TOÁN CÁC MỤC TĂNG CA MỚI (Cập nhật rates để dG_12 tính lương mục 17)
-        const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.5]; // r (v6_12) dùng hệ số 1.5
+        const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.5];
         let totalTC_New = 0;
         for(let j=1; j<=12; j++){
             let hours = parseN('dG_'+j);
@@ -354,7 +342,6 @@ function getCls(d, m, y) {
 
         let sTC_Dem = Math.round(parseN('dF') * perH * 2.15);
         document.getElementById('v5').value = sTC_Dem.toLocaleString();
-
         let s70 = Math.round(parseN('dO') * perH * 0.7);
         document.getElementById('v13').value = s70.toLocaleString();
         

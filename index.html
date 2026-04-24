@@ -322,9 +322,10 @@
         document.getElementById('v23').value = tienAnDem.toLocaleString();
 
         const bSal = parseN('bSal'), iSal = parseN('iSal'), std = parseN('sDay') || 26;
-        const perH = bSal/std/8;
-
-        const sD = (bSal/std) * cNgay, sN = (bSal/std) * cDem, sNghi = perH * 2.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
+        
+        // --- SỬA CÁCH TÍNH Ở ĐÂY: Sử dụng iSal thay vì bSal ---
+        const perH = iSal/std/8; 
+        const sD = (iSal/std) * cNgay, sN = (iSal/std) * cDem, sNghi = perH * 2.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
         
         document.getElementById('v1').value = Math.round(sD).toLocaleString();
         document.getElementById('v2').value = Math.round(sN).toLocaleString();
@@ -405,6 +406,18 @@
         }
         calc();
     }
+
+    // --- SỬA THÊM SỰ KIỆN NHẬP LƯƠNG TỰ ĐỘNG ---
+    function formatMoney(input) {
+        let val = input.value.replace(/\D/g, '');
+        if (val !== "") {
+            input.value = Number(val).toLocaleString('en-US');
+        }
+    }
+    
+    document.getElementById('bSal').addEventListener('input', function() { formatMoney(this); calc(); });
+    document.getElementById('iSal').addEventListener('input', function() { formatMoney(this); calc(); });
+    document.getElementById('sDay').addEventListener('input', calc);
 
     document.getElementById('passKey').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
     ms.addEventListener('change', render); ys.addEventListener('change', render); 

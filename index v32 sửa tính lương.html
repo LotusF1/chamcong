@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V31</title>
+    <style>
+        :root {
+            --bg-header: #c6efce;
+            --bg-sunday: #ff0000;
+            --bg-holiday: #ffff00;
+            --bg-special: #00b050;
+            --bg-today: #cc99ff;
+            --bg-night: #333;
+        }
+
+        body { font-family: "Segoe UI", Tahoma, sans-serif; font-size: 10px; margin: 10px; }
+        .container { border: 1px solid #000; padding: 15px; width: 1100px; margin: auto; background: #fff; }
+        
+        table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+        th, td { border: 1px solid #000; height: 22px; text-align: center; padding: 0 4px; }
+        .main-title { background: var(--bg-header); font-weight: bold; font-size: 14px; }
+
+        .sun { background: var(--bg-sunday) !important; color: white; }
+        .hol { background: var(--bg-holiday) !important; }
+        .spe { background: var(--bg-special) !important; color: white; }
+        .tod { background: var(--bg-today) !important; }
+        .night-shift { background: var(--bg-night) !important; color: #ffff00 !important; font-weight: bold; }
+
+        input { width: 100%; border: none; background: transparent; text-align: center; font-size: 10px; outline: none; }
+        .num { text-align: right; font-family: 'Courier New', Courier, monospace; }
+        .bold { font-weight: bold; }
+        .label-cell { text-align: left; background: #f9f9f9; width: 180px; }
+
+        .salary-container { display: grid; grid-template-columns: 280px 280px 240px 280px; gap: 10px; margin-top: 20px; }
+        .col table { width: 100%; table-layout: fixed; }
+        .col td { text-align: left; }
+        .col td:nth-child(2) { text-align: right; width: 90px; }
+        .header-gray { background: #e1e1e1; font-weight: bold; text-align: center !important; }
+        .result-box { background: #ffff00; font-weight: bold; font-size: 14px; border: 1px solid #000; padding: 5px 20px; display: inline-block; }
+
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-box {
+            padding: 40px; border: 2px solid #000; background: #fff;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .pass-wrapper { position: relative; width: 250px; margin: 0 auto 15px auto; }
+        .toggle-pass {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; font-size: 18px; user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2 style="margin-top:0;">HỆ THỐNG CHẤM CÔNG</h2>
+        <p>Vui lòng nhập Mã Truy Cập được cấp</p>
+        <div class="pass-wrapper">
+            <input type="password" id="passKey" placeholder="Mã truy cập..." style="border:1px solid #000; padding:12px; width:100%; font-size:16px; text-align:center; box-sizing: border-box;">
+            <span class="toggle-pass" onclick="toggleViewPass()">👁️</span>
+        </div>
+        <button onclick="checkLogin()" style="padding:10px 40px; cursor:pointer; background:#00b050; color:white; border:none; font-weight:bold; font-size:14px;">ĐĂNG NHẬP</button>
+        <p id="loginMsg" style="color:red; margin-top:15px; font-weight:bold; height:20px;"></p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="main-title" style="padding: 5px; text-align: center; border: 1px solid #000; margin-bottom: 10px;">BẢNG CHẤM CÔNG & CHI TIẾT LƯƠNG</div>
+    
+    <div style="margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+        <strong>ĐIỀU KHIỂN:</strong> Tháng: <select id="m"></select> Năm: <select id="y"></select>
+        <span style="margin-left: 20px;">
+            <span style="color: red;">■</span> CN | <span style="color: #ffd700;">■</span> Lễ | <span style="color: green;">■</span> Đặc biệt | <span style="background:#cc99ff;">■</span> Hôm nay | <span style="background:#333; color:yellow; padding:0 3px;">n</span> Làm đêm | <span >x</span> Làm ngày
+        </span>
+        <button onclick="clearUserData()" style="float:right; cursor:pointer; background:#ff4d4d; color:white; border:none; padding:3px 10px; font-size:10px; margin-left: 10px;">Xóa dữ liệu cũ</button>
+        <span id="userNameDisplay" style="float:right; font-weight:bold; color:#00b050;"></span>
+    </div>
+
+    <div id="attTable"></div>
+
+    <table style="width: 450px; margin-top: 15px;">
+        <tr><td class="label-cell">Lương Cơ Bản / Basic salary:</td><td><input type="text" id="bSal" value="0" class="num bold"></td></tr>
+        <tr><td class="label-cell">Lương đóng BHXH:</td><td><input type="text" id="iSal" value="0" class="num bold"></td></tr>
+        <tr><td class="label-cell">Ngày công chuẩn (STD):</td><td><input type="number" id="sDay" value="26" class="num bold"></td></tr>
+    </table>
+
+    <div class="salary-container">
+        <div class="col">
+            <table>
+                <tr class="header-gray"><td colspan="2">1. THU NHẬP</td></tr>
+                <tr><td>1 Lương ngày</td><td><input id="v1" class="num" readonly></td></tr>
+                <tr><td>2 Lương đêm</td><td><input id="v2" class="num" readonly></td></tr>
+                <tr><td>3 Đi làm ngày nghỉ</td><td><input id="v3" class="num" readonly></td></tr>
+                <tr><td>4 Tăng ca ngày 150%</td><td><input id="v4" class="num" readonly></td></tr>
+                <tr><td>5 Tăng ca đêm 215%</td><td><input id="v5" class="num" readonly></td></tr>
+                <tr><td>6 Ngoài giờ ca A- ca B 150%</td><td><input id="v6_1" class="num" readonly></td></tr>
+                <tr><td>7 Ngoài giờ ca A 215%</td><td><input id="v6_2" class="num" readonly></td></tr>
+                <tr><td>8 Ngoài giờ ca A 200%</td><td><input id="v6_3" class="num" readonly></td></tr>
+                <tr><td>9 Trong giờ ca B 150%</td><td><input id="v6_4" class="num" readonly></td></tr>
+                <tr><td>10 Trong giờ ca B 300%</td><td><input id="v6_5" class="num" readonly></td></tr>
+                <tr><td>11 Ngoài giờ ca A- ca B 300%</td><td><input id="v6_6" class="num" readonly></td></tr>
+                <tr><td>12 Ngoài giờ ca A 410%</td><td><input id="v6_7" class="num" readonly></td></tr>
+                <tr><td>13 Ngoài giờ ca A 400%</td><td><input id="v6_8" class="num" readonly></td></tr>
+                <tr><td>14 Trong giờ ca B 600%</td><td><input id="v6_9" class="num" readonly></td></tr>
+                <tr><td>15 Ngoài giờ ca A- ca B 600%</td><td><input id="v6_10" class="num" readonly></td></tr>
+                <tr><td>16 Ngoài giờ ca A 605%</td><td><input id="v6_11" class="num" readonly></td></tr>
+                <tr><td>17 Phúc lợi tăng ca trên 2h</td><td><input id="v6_12" class="num" readonly></td></tr>
+                <tr><td>18 Lương 70%</td><td><input id="v13" class="num" readonly></td></tr>
+                <tr><td>19 Bù lương</td><td><input id="v14" class="num" value="0"></td></tr>
+                <tr><td>20 Phụ cấp Xăng</td><td><input id="v15" class="num" value="0"></td></tr>
+                <tr><td>21 Phụ cấp nhà</td><td><input id="v16" class="num" value="0"></td></tr>
+                <tr><td>22 Phụ cấp CC</td><td><input id="v17" class="num" value="0"></td></tr>
+                <tr><td>23 PC Ca đêm </td><td><input id="v18" class="num" readonly></td></tr>
+                <tr><td>24 PC Tiền ăn</td><td><input id="v19" class="num" value="0"></td></tr>
+                <tr><td>25 PC Con nhỏ</td><td><input id="v20" class="num" value="0"></td></tr>
+                <tr><td>26 PC Kiểm kinh</td><td><input id="v21" class="num" value="0"></td></tr>
+                <tr><td>27 PC Bằng cấp</td><td><input id="v22" class="num" value="0"></td></tr>
+                <tr><td>28 TN khác </td><td><input id="v23" class="num" readonly></td></tr>
+                <tr><td>29 TN khác (sau thuế)</td><td><input id="v24" class="num" value="0"></td></tr>
+                <tr><td>30 Tiền Phép năm</td><td><input id="v25" class="num" value="0"></td></tr>
+            </table>
+        </div>
+
+        <div class="col">
+            <table>
+                <tr class="header-gray"><td colspan="2">2. KHOẢN TRỪ</td></tr>
+                <tr><td>33 BHXH (8%)</td><td><input id="v33" class="num" readonly></td></tr>
+                <tr><td>34 BHYT (1.5%)</td><td><input id="v34" class="num" readonly></td></tr>
+                <tr><td>35 BHTN (1%)</td><td><input id="v35" class="num" readonly></td></tr>
+                <tr><td>36 Phí công đoàn</td><td><input id="v36" class="num" value="0"></td></tr>
+                <tr><td>37 Trễ sớm</td><td><input id="v37" class="num" value="0"></td></tr>
+                <tr><td>38 Thuế TNCN</td><td><input id="v38" class="num" readonly></td></tr>
+                <tr><td>39 Nợ BHYT</td><td><input id="v39" class="num" value="0"></td></tr>
+                <tr><td>40 Tạm ứng</td><td><input id="v40" class="num" value="0"></td></tr>
+                <tr><td>41 Thu nhập khác (Trước thuế)</td><td><input id="v41" class="num" value="0"></td></tr>
+                <tr><td>42 Thu nhập khác (Sau thuế)</td><td><input id="v42" class="num" value="0"></td></tr>
+                <tr class="header-gray"><td colspan="2">KẾT QUẢ THUẾ</td></tr>
+                <tr><td>TN chịu thuế</td><td><input id="taxI" class="num" readonly></td></tr>
+                <tr style="background:#eefbff;"><td><b>Thuế suất (%)</b></td><td><input id="taxRate" class="num" readonly style="color:blue; font-weight:bold;"></td></tr>
+            </table>
+        </div>
+
+        <div class="col">
+            <table>
+                <tr class="header-gray"><td colspan="2">3. PHỤ CẤP LƯƠNG</td></tr>
+                <tr><td>26 PC Chức vụ</td><td><input id="v26" class="num" value="0"></td></tr>
+                <tr><td>27 PC Trách nhiệm</td><td><input id="v27" class="num" value="0"></td></tr>
+                <tr><td>28 PC Năng lực</td><td><input id="v28" class="num" value="0"></td></tr>
+                <tr><td>29 PC Công việc</td><td><input id="v29" class="num" value="0"></td></tr>
+                <tr><td>30 PC Độc hại</td><td><input id="v30" class="num" value="0"></td></tr>
+                <tr><td>31 PC Đặc biệt</td><td><input id="v31" class="num" value="0"></td></tr>
+                <tr><td>32 PC Thâm niên</td><td><input id="v32" class="num" value="0"></td></tr>
+            </table>
+        </div>
+
+        <div class="col">
+            <table>
+                <tr class="header-gray"><td colspan="2">4. CHI TIẾT CÔNG</td></tr>
+                <tr><td>a Công ngày (x)</td><td><input id="dA" readonly> Ngày</td></tr>
+                <tr><td>b Công đêm (n)</td><td><input id="dB" readonly> Ngày</td></tr>
+                <tr><td>c Giờ công đêm</td><td><input id="dC" value="0"> Giờ</td></tr>
+                <tr><td>d Công ngày nghỉ</td><td><input id="dD" readonly> Giờ</td></tr>
+                <tr><td>e Tăng ca ngày 150%</td><td><input id="dE" readonly> Giờ</td></tr>
+                <tr><td>f Tăng ca đêm 215%</td><td><input id="dF" value="0"> Giờ</td></tr>
+                <tr><td>g Ngoài giờ ca A-ca B 150%</td><td><input id="dG_1" value="0"> Giờ</td></tr>
+                <tr><td>h Ngoài giờ ca A 215%</td><td><input id="dG_2" value="0"> Giờ</td></tr>
+                <tr><td>i Trong giờ ca A 200%</td><td><input id="dG_3" value="0"> Giờ</td></tr>
+                <tr><td>j Trong giờ ca B 150%</td><td><input id="dG_4" value="0"> Giờ</td></tr>
+                <tr><td>k Trong giờ ca B 300%</td><td><input id="dG_5" value="0"> Giờ</td></tr>
+                <tr><td>l Ngoài giờ ca A- ca B 300%</td><td><input id="dG_6" value="0"> Giờ</td></tr>
+                <tr><td>m Ngoài giờ ca A 410%</td><td><input id="dG_7" value="0"> Giờ</td></tr>
+                <tr><td>n Trong giờ ca A 400%</td><td><input id="dG_8" value="0"> Giờ</td></tr>
+                <tr><td>o Trong giờ ca B 600%</td><td><input id="dG_9" value="0"> Giờ</td></tr>
+                <tr><td>p Ngoài giờ ca A- ca B 600%</td><td><input id="dG_10" value="0"> Giờ</td></tr>
+                <tr><td>q Ngoài giờ ca A 605%</td><td><input id="dG_11" value="0"> Giờ</td></tr>
+                <tr><td>r Phúc lợi tăng ca trên 2h</td><td><input id="dG_12" readonly> Giờ</td></tr>
+                <tr><td>s Lương 70%</td><td><input id="dO" value="0"> Giờ</td></tr>
+                <tr><td>t Trễ, Sớm</td><td><input id="dP" value="0"> Giờ</td></tr>
+                <tr><td>u Nghỉ ko lương</td><td><input id="dQ" value="0"> Ngày</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: center;">
+        <span style="font-weight: bold;">TỔNG THỰC LĨNH: </span>
+        <div class="result-box" id="final">0</div>
+    </div>
+</div>
+
+<script>
+    // --- KHU VỰC ADMIN ---
+    const USERS_LIST = {
+        'ADMIN001': 'Trần Tuấn Linh',
+        'NV12345': 'Nguyễn Văn A',
+        'NV67890': 'Trần Thị B'
+    };
+
+    let currentUser = '';
+
+    function toggleViewPass() {
+        const p = document.getElementById('passKey');
+        p.type = p.type === 'password' ? 'text' : 'password';
+    }
+
+    function checkLogin() {
+        const input = document.getElementById('passKey').value.trim().toUpperCase();
+        if (USERS_LIST[input]) {
+            currentUser = input;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[input];
+            loadSavedData();
+        } else {
+            document.getElementById('loginMsg').innerText = "Mã truy cập không hợp lệ!";
+        }
+    }
+
+    function clearUserData() {
+        if(confirm("Xóa toàn bộ dữ liệu của tài khoản này?")) {
+            localStorage.removeItem('db_user_' + currentUser);
+            location.reload();
+        }
+    }
+
+    // --- LOGIC TÍNH TOÁN ---
+    const YELLOW = ["1-1-2026", "16-2-2026", "17-2-2026", "18-2-2026", "19-2-2026", "20-2-2026", "26-4-2026", "27-4-2026", "30-4-2026", "1-5-2026", "17-8-2026", "1-9-2026", "2-9-2026"];
+    const GREEN = ["10-1-2026", "24-1-2026", "14-2-2026", "21-2-2026", "14-3-2026", "28-3-2026", "11-4-2026", "28-4-2026", "29-4-2026", "2-5-2026", "16-5-2026", "30-5-2026", "13-6-2026", "27-6-2026", "11-7-2026", "25-7-2026", "8-8-2026", "13-8-2026", "14-8-2026", "15-8-2026", "29-8-2026", "31-8-2026", "12-9-2026", "26-9-2026", "10-10-2026", "25-10-2026", "7-11-2026", "21-11-2026", "5-12-2026", "19-12-2026", "30-12-2026", "31-12-2026"];
+
+    const ms = document.getElementById('m'), ys = document.getElementById('y');
+    for(let i=1; i<=12; i++) ms.innerHTML += `<option value="${i}" ${i==new Date().getMonth()+1?'selected':''}>${i}</option>`;
+    for(let i=2024; i<=2030; i++) ys.innerHTML += `<option value="${i}" ${i==new Date().getFullYear()?'selected':''}>${i}</option>`;
+
+    function getCls(d, m, y) {
+        const now = new Date();
+        const ds_with_year = `${d}-${m}-${y}`;
+        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return 'tod';
+        if(YELLOW.includes(ds_with_year)) return 'hol';
+        if(GREEN.includes(ds_with_year)) return 'spe';
+        if(new Date(y, m-1, d).getDay() === 0) return 'sun';
+        return '';
+    }
+    
+    function render() {
+        const m = parseInt(ms.value), y = parseInt(ys.value);
+        let days = [], pm = m===1?12:m-1, py = m===1?y-1:y, dpm = new Date(py, pm, 0).getDate();
+        for(let d=21; d<=dpm; d++) days.push({d, m: pm, y: py});
+        for(let d=1; d<=20; d++) days.push({d, m, y});
+
+        let h = `<table><tr style="background:#eee"><td>Ngày</td>`;
+        days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}" data-cls="${cls}">${i.d}</td>`; });
+        h += `<td rowspan="2">Công</td><td rowspan="2">OT</td></tr><tr style="background:#eee"><td>Thứ</td>`;
+        const w = ["CN","T2","T3","T4","T5","T6","T7"];
+        days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}">${w[new Date(i.y, i.m-1, i.d).getDay()]}</td>`; });
+        h += `</tr><tr><td class="bold">Đi làm</td>`;
+        days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}"><input class="win" data-cls="${cls}"></td>`; });
+        h += `<td id="rW" class="bold">0</td><td>-</td></tr><tr><td class="bold">Tăng ca</td>`;
+        days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}"><input class="oin"></td>`; });
+        h += `<td>-</td><td id="rO" class="bold">0</td></tr></table>`;
+        
+        document.getElementById('attTable').innerHTML = h;
+        document.querySelectorAll('.win').forEach(i => i.addEventListener('input', function() {
+            if(this.value.toLowerCase() === 'n') this.parentElement.classList.add('night-shift');
+            else this.parentElement.classList.remove('night-shift');
+            calc();
+        }));
+        document.querySelectorAll('.oin').forEach(i => i.addEventListener('input', calc));
+        document.querySelectorAll('.col input').forEach(i => i.addEventListener('input', calc));
+        calc();
+    }
+
+    function parseN(id) { 
+        let el = document.getElementById(id);
+        return el ? parseFloat(el.value.toString().replace(/,/g, '')) || 0 : 0; 
+    }
+
+    function calc() {
+        let cNgay = 0, cDem = 0, cNghi = 0, tienAnDem = 0;
+        let totalOT_Row = 0;
+        let totalPhucLoi_R = 0;
+
+        const wins = document.querySelectorAll('.win');
+        const oins = document.querySelectorAll('.oin');
+
+        wins.forEach((i, idx) => {
+            let v = i.value.toLowerCase(); 
+            let cls = i.getAttribute('data-cls');
+            let otVal = parseFloat(oins[idx].value) || 0;
+
+            if(otVal > 2) {
+                totalPhucLoi_R += 0.5;
+                totalOT_Row += (otVal - 0.5);
+            } else {
+                totalOT_Row += otVal;
+            }
+
+            if(v==='x' || v==='n' || v==='1/2x') {
+                if(['hol','spe','sun'].includes(cls)) {
+                    if(v === 'x' || v === 'n') cNghi += 8; else if(v === '1/2x') cNghi += 4;
+                } else {
+                    if(v==='x') cNgay += 1; else if(v==='1/2x') cNgay += 0.5;
+                    else if(v==='n') { cDem += 1; if(otVal > 2) tienAnDem += 25000; }
+                }
+            }
+        });
+
+        document.getElementById('rW').innerText = cNgay + cDem + (cNghi/8); 
+        document.getElementById('dA').value = cNgay;
+        document.getElementById('dB').value = cDem;
+        document.getElementById('dD').value = cNghi;
+        document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toFixed(1); 
+        
+        document.getElementById('dE').value = totalOT_Row;
+        document.getElementById('dG_12').value = totalPhucLoi_R;
+
+        // Cập nhật: Phụ cấp ca đêm = Công đêm * 25,000
+        let pcCaDem = cDem * 25000; 
+        document.getElementById('v18').value = pcCaDem.toLocaleString();
+        document.getElementById('v23').value = tienAnDem.toLocaleString();
+
+        const bSal = parseN('bSal'), iSal = parseN('iSal'), std = parseN('sDay') || 26;
+        const perH = bSal/std/8;
+
+        const sD = (bSal/std) * cNgay, sN = (bSal/std) * cDem, sNghi = perH * 2.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
+        
+        document.getElementById('v1').value = Math.round(sD).toLocaleString();
+        document.getElementById('v2').value = Math.round(sN).toLocaleString();
+        document.getElementById('v3').value = Math.round(sNghi).toLocaleString();
+        document.getElementById('v4').value = Math.round(sO).toLocaleString();
+
+        const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.5];
+        let totalTC_New = 0;
+        for(let j=1; j<=12; j++){
+            let hours = parseN('dG_'+j);
+            let val = Math.round(hours * perH * rates[j-1]);
+            document.getElementById('v6_'+j).value = val.toLocaleString();
+            totalTC_New += val;
+        }
+
+        let sTC_Dem = Math.round(parseN('dF') * perH * 2.15);
+        document.getElementById('v5').value = sTC_Dem.toLocaleString();
+        let s70 = Math.round(parseN('dO') * perH * 0.7);
+        document.getElementById('v13').value = s70.toLocaleString();
+        
+        const bhxh = Math.round(iSal*0.08), bhyt = Math.round(iSal*0.015), bhtn = Math.round(iSal*0.01);
+        document.getElementById('v33').value = bhxh.toLocaleString();
+        document.getElementById('v34').value = bhyt.toLocaleString();
+        document.getElementById('v35').value = bhtn.toLocaleString();
+
+        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14');
+        let phuCapChung = parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31') + parseN('v32');
+        let muc20 = parseN('v20');
+
+        let tnTruocThue = thuNhapChung + phuCapChung + pcCaDem + tienAnDem - (bhxh+bhyt+bhtn);
+        document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
+        
+        let tnTinhThue = tnTruocThue - 11000000 - (4400000 * (muc20 / 150000)); 
+        
+        let rate = "0%"; let tienThue = 0;
+        if (tnTinhThue > 0) {
+            if (tnTinhThue <= 5000000) { rate = "5%"; tienThue = tnTinhThue * 0.05; }
+            else if (tnTinhThue <= 10000000) { rate = "10%"; tienThue = tnTinhThue * 0.1 - 250000; }
+            else if (tnTinhThue <= 18000000) { rate = "15%"; tienThue = tnTinhThue * 0.15 - 750000; }
+            else if (tnTinhThue <= 32000000) { rate = "20%"; tienThue = tnTinhThue * 0.2 - 1650000; }
+            else if (tnTinhThue <= 52000000) { rate = "25%"; tienThue = tnTinhThue * 0.25 - 3250000; }
+            else if (tnTinhThue <= 80000000) { rate = "30%"; tienThue = tnTinhThue * 0.3 - 5850000; }
+            else { rate = "35%"; tienThue = tnTinhThue * 0.35 - 9850000; }
+        }
+        document.getElementById('taxRate').value = rate;
+        document.getElementById('v38').value = Math.round(tienThue).toLocaleString();
+
+        let totalPlus = thuNhapChung + phuCapChung + parseN('v15') + parseN('v16') + parseN('v17') + pcCaDem + parseN('v19') + muc20 + parseN('v21') + parseN('v22') + tienAnDem + parseN('v24') + parseN('v25');
+        let totalMinus = (bhxh+bhyt+bhtn) + parseN('v36') + parseN('v37') + tienThue + parseN('v39') + parseN('v40') + parseN('v41') + parseN('v42');
+
+        document.getElementById('final').innerText = Math.round(totalPlus - totalMinus).toLocaleString();
+        saveData(); 
+    }
+
+    function saveData() {
+        if (!currentUser) return;
+        const data = {};
+        document.querySelectorAll('input').forEach(inp => { if(inp.id && !inp.readOnly) data[inp.id] = inp.value; });
+        const att = [];
+        document.querySelectorAll('.win').forEach((el, i) => { att.push({ w: el.value, o: document.querySelectorAll('.oin')[i].value }); });
+        data.att = att; data.m = ms.value; data.y = ys.value;
+        localStorage.setItem('db_user_' + currentUser, JSON.stringify(data));
+    }
+
+    function loadSavedData() {
+        const saved = localStorage.getItem('db_user_' + currentUser);
+        if(!saved) return;
+        const data = JSON.parse(saved);
+        ms.value = data.m; ys.value = data.y;
+        render(); 
+        for(let id in data) { let el = document.getElementById(id); if(el && id !== 'att') el.value = data[id]; }
+        if(data.att) {
+            const wins = document.querySelectorAll('.win'), oins = document.querySelectorAll('.oin');
+            data.att.forEach((item, i) => {
+                if(wins[i]) { wins[i].value = item.w; if(item.w.toLowerCase()==='n') wins[i].parentElement.classList.add('night-shift'); }
+                if(oins[i]) oins[i].value = item.o;
+            });
+        }
+        calc();
+    }
+
+    document.getElementById('passKey').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
+    ms.addEventListener('change', render); ys.addEventListener('change', render); 
+    render();
+</script>
+</body>
+</html>

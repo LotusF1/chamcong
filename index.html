@@ -178,7 +178,7 @@
                 <tr><td>o Trong giờ ca B 600%</td><td><input id="dG_9" value="0"> Giờ</td></tr>
                 <tr><td>p Ngoài giờ ca A- ca B 600%</td><td><input id="dG_10" value="0"> Giờ</td></tr>
                 <tr><td>q Ngoài giờ ca A 605%</td><td><input id="dG_11" value="0"> Giờ</td></tr>
-                <tr><td>r Phúc lợi tăng ca trên 2h</td><td><input id="dG_12" value="0"> Giờ</td></tr>
+                <tr><td>r Phúc lợi tăng ca trên 2h</td><td><input id="dG_12" readonly> Giờ</td></tr>
                 <tr><td>s Lương 70%</td><td><input id="dO" value="0"> Giờ</td></tr>
                 <tr><td>t Trễ, Sớm</td><td><input id="dP" value="0"> Giờ</td></tr>
                 <tr><td>u Nghỉ ko lương</td><td><input id="dQ" value="0"> Ngày</td></tr>
@@ -269,7 +269,6 @@
         }));
         document.querySelectorAll('.oin').forEach(i => i.addEventListener('input', calc));
         
-        // Gán sự kiện cho các ô nhập liệu mới trong cột 4
         document.querySelectorAll('.col input').forEach(i => i.addEventListener('input', calc));
         calc();
     }
@@ -281,12 +280,25 @@
 
     function calc() {
         let cNgay = 0, cDem = 0, cNghi = 0, tienAnDem = 0;
+        let totalOT_Row = 0;
+        let totalPhucLoi_R = 0; // Tổng giờ ô r
+
         const wins = document.querySelectorAll('.win');
         const oins = document.querySelectorAll('.oin');
 
         wins.forEach((i, idx) => {
-            let v = i.value.toLowerCase(); let cls = i.getAttribute('data-cls');
+            let v = i.value.toLowerCase(); 
+            let cls = i.getAttribute('data-cls');
             let otVal = parseFloat(oins[idx].value) || 0;
+
+            // Xử lý logic trích 0.5h từ OT > 2h vào ô r
+            if(otVal > 2) {
+                totalPhucLoi_R += 0.5;
+                totalOT_Row += (otVal - 0.5); // Trừ bớt 0.5h khỏi cột tăng ca chính
+            } else {
+                totalOT_Row += otVal;
+            }
+
             if(v==='x' || v==='n' || v==='1/2x') {
                 if(['hol','spe','sun'].includes(cls)) {
                     if(v === 'x' || v === 'n') cNghi += 8; else if(v === '1/2x') cNghi += 4;
@@ -297,13 +309,15 @@
             }
         });
 
-        let to = 0; oins.forEach(i => to += parseFloat(i.value)||0);
         document.getElementById('rW').innerText = cNgay + cDem + (cNghi/8); 
         document.getElementById('dA').value = cNgay;
         document.getElementById('dB').value = cDem;
         document.getElementById('dD').value = cNghi;
-        document.getElementById('rO').innerText = to; 
-        document.getElementById('dE').value = to;
+        document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toFixed(1); 
+        
+        // Hiển thị kết quả vào mục chi tiết công
+        document.getElementById('dE').value = totalOT_Row;
+        document.getElementById('dG_12').value = totalPhucLoi_R;
 
         let pcCaDem = cDem * 25000;
         document.getElementById('v18').value = pcCaDem.toLocaleString();
@@ -312,15 +326,15 @@
         const bSal = parseN('bSal'), iSal = parseN('iSal'), std = parseN('sDay') || 26;
         const perH = bSal/std/8;
 
-        const sD = (bSal/std) * cNgay, sN = (bSal/std) * cDem, sNghi = perH * 2.0 * cNghi, sO = perH * 1.5 * to;
+        const sD = (bSal/std) * cNgay, sN = (bSal/std) * cDem, sNghi = perH * 2.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
         
         document.getElementById('v1').value = Math.round(sD).toLocaleString();
         document.getElementById('v2').value = Math.round(sN).toLocaleString();
         document.getElementById('v3').value = Math.round(sNghi).toLocaleString();
         document.getElementById('v4').value = Math.round(sO).toLocaleString();
 
-        // TÍNH TOÁN CÁC MỤC TĂNG CA MỚI (ID dG_1 -> dG_12 ứng với v6_1 -> v6_12)
-        const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.0]; // r cuối là phúc lợi giả định hệ số 1
+        // TÍNH TOÁN CÁC MỤC TĂNG CA MỚI (Cập nhật rates để dG_12 tính lương mục 17)
+        const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.5]; // r (v6_12) dùng hệ số 1.5
         let totalTC_New = 0;
         for(let j=1; j<=12; j++){
             let hours = parseN('dG_'+j);
@@ -329,11 +343,9 @@
             totalTC_New += val;
         }
 
-        // Tăng ca đêm 215% (v5) dựa trên dF
         let sTC_Dem = Math.round(parseN('dF') * perH * 2.15);
         document.getElementById('v5').value = sTC_Dem.toLocaleString();
 
-        // Lương 70% (v13) dựa trên dO
         let s70 = Math.round(parseN('dO') * perH * 0.7);
         document.getElementById('v13').value = s70.toLocaleString();
         
@@ -349,7 +361,7 @@
         let tnTruocThue = thuNhapChung + phuCapChung + pcCaDem + tienAnDem - (bhxh+bhyt+bhtn);
         document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
         
-        let tnTinhThue = tnTruocThue - 11000000 - (4400000 * (muc20 / 150000)); // Giả định mức giảm trừ 
+        let tnTinhThue = tnTruocThue - 11000000 - (4400000 * (muc20 / 150000)); 
         
         let rate = "0%"; let tienThue = 0;
         if (tnTinhThue > 0) {

@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V51 (Sửa Lỗi Cộng Kép Tiền Ăn Auto)</title>
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V54 (Tích hợp Email & Zalo)</title>
     <style>
         :root {
             --bg-header: #c6efce;
@@ -13,12 +13,12 @@
             --bg-night: #333;
         }
 
-        body { font-family: "Segoe UI", Tahoma, sans-serif; font-size: 10px; margin: 10px; }
-        .container { border: 1px solid #000; padding: 15px; width: 1100px; margin: auto; background: #fff; }
+        body { font-family: "Segoe UI", Tahoma, sans-serif; font-size: 10px; margin: 10px; background: #f0f2f5; }
+        .container { border: 1px solid #ccc; padding: 15px; width: 1100px; margin: auto; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         
         table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
         th, td { border: 1px solid #000; height: 22px; text-align: center; padding: 0 4px; }
-        .main-title { background: var(--bg-header); font-weight: bold; font-size: 14px; }
+        .main-title { background: var(--bg-header); font-weight: bold; font-size: 14px; text-transform: uppercase;}
 
         .sun { background: var(--bg-sunday) !important; color: white; }
         .hol { background: var(--bg-holiday) !important; }
@@ -38,40 +38,89 @@
         .header-gray { background: #e1e1e1; font-weight: bold; text-align: center !important; }
         .result-box { background: #ffff00; font-weight: bold; font-size: 14px; border: 1px solid #000; padding: 5px 20px; display: inline-block; }
 
+        /* --- UI ĐĂNG NHẬP & ĐĂNG KÝ --- */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.98); z-index: 9999;
+            background: rgba(236, 240, 241, 0.95); z-index: 9999;
             display: flex; justify-content: center; align-items: center;
         }
-        .login-box {
-            padding: 40px; border: 2px solid #000; background: #fff;
-            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 320px;
+        .auth-box {
+            padding: 40px; border: 1px solid #ddd; background: #fff;
+            text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 340px; border-radius: 8px;
         }
-        .pass-wrapper { position: relative; width: 100%; margin: 0 auto 15px auto; }
+        .auth-input {
+            border: 1px solid #ccc; padding: 12px; width: 100%; font-size: 14px; 
+            text-align: center; box-sizing: border-box; margin-bottom: 10px;
+            border-radius: 4px; transition: 0.3s;
+        }
+        .auth-input:focus { border-color: #00b050; outline: none; }
+        .auth-btn {
+            padding: 12px 40px; cursor: pointer; background: #00b050; color: white; 
+            border: none; font-weight: bold; font-size: 14px; width: 100%; 
+            border-radius: 4px; margin-top: 5px; transition: 0.3s;
+        }
+        .auth-btn:hover { background: #008f40; }
         .toggle-pass {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
             cursor: pointer; font-size: 18px; user-select: none;
+        }
+        .link-text {
+            color: #0070c0; font-size: 12px; cursor: pointer; text-decoration: underline; margin-top: 15px; display: inline-block;
         }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-    <div class="login-box">
-        <h2 style="margin-top:0; font-size: 20px;">HỆ THỐNG CHẤM CÔNG</h2>
-        <p style="color: #666; margin-bottom: 20px;">Vui lòng xác thực tài khoản</p>
+    <div class="auth-box">
         
-        <div class="pass-wrapper">
-            <input type="text" id="userNameInput" placeholder="Tên đăng nhập..." style="border:1px solid #000; padding:12px; width:100%; font-size:14px; text-align:center; box-sizing: border-box; margin-bottom: 10px;">
-            <div style="position: relative;">
-                <input type="password" id="passKey" placeholder="Mật khẩu..." style="border:1px solid #000; padding:12px; width:100%; font-size:14px; text-align:center; box-sizing: border-box;">
-                <span class="toggle-pass" onclick="toggleViewPass()">👁️</span>
+        <div id="viewLogin">
+            <h2 style="margin-top:0; font-size: 20px; color: #333;">HỆ THỐNG CHẤM CÔNG</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 12px;">Đăng nhập để xem bảng lương</p>
+            
+            <div style="position: relative; width: 100%; margin: 0 auto 5px auto;">
+                <input type="text" id="userNameInput" class="auth-input" placeholder="Tên đăng nhập...">
+                <div style="position: relative;">
+                    <input type="password" id="passKey" class="auth-input" placeholder="Mật khẩu...">
+                    <span class="toggle-pass" onclick="toggleViewPass()">👁️</span>
+                </div>
             </div>
+            
+            <button class="auth-btn" onclick="checkLogin()">ĐĂNG NHẬP</button>
+            <p id="loginMsg" style="color:red; margin-top:10px; font-weight:bold; height:15px; font-size: 11px;"></p>
+            
+            <span class="link-text" onclick="switchAuthView('register')">Chưa có tài khoản? Yêu cầu cấp mới</span>
         </div>
-        
-        <button onclick="checkLogin()" style="padding:12px 40px; cursor:pointer; background:#00b050; color:white; border:none; font-weight:bold; font-size:14px; width: 100%; margin-top: 5px;">ĐĂNG NHẬP</button>
-        <p id="loginMsg" style="color:red; margin-top:15px; font-weight:bold; height:20px; font-size: 12px;"></p>
+
+        <div id="viewRegister" style="display: none;">
+            <h2 style="margin-top:0; font-size: 18px; color: #333;">YÊU CẦU TÀI KHOẢN</h2>
+            <p style="color: #666; margin-bottom: 10px; font-size: 11px;">Gửi thông tin cho Admin để được cấp quyền.</p>
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 20px; border: 1px dashed #ccc;">
+                <p style="color: #0070c0; font-weight: bold; margin: 0; font-size: 11px;">Admin: Tuấn Linh</p>
+                <p style="color: #333; margin: 5px 0 0 0; font-size: 11px;">Zalo: 0336111456</p>
+                <p style="color: #333; margin: 5px 0 0 0; font-size: 11px;">Email: trantuanlinh1902@gmail.com</p>
+            </div>
+            
+            <input type="text" id="regName" class="auth-input" placeholder="Họ và Tên của bạn...">
+            <input type="text" id="regDept" class="auth-input" placeholder="MSNV / Bộ phận...">
+            
+            <button class="auth-btn" style="background: #0070c0;" onclick="generateRegRequest()">TẠO YÊU CẦU</button>
+            
+            <div id="regResult" style="display: none; margin-top: 15px;">
+                <textarea id="regMsgContent" readonly style="width: 100%; height: 75px; font-size: 11px; padding: 8px; box-sizing: border-box; border: 1px solid #00b050; border-radius: 4px; resize: none; background: #e8f4f8; margin-bottom: 5px;"></textarea>
+                
+                <div style="display: flex; gap: 5px; justify-content: center;">
+                    <button class="auth-btn" style="padding: 8px 5px; font-size: 11px; background: #333;" onclick="copyRegMsg()">📋 Copy</button>
+                    <button class="auth-btn" style="padding: 8px 5px; font-size: 11px; background: #0068ff;" onclick="sendZaloRequest()">💬 Gửi Zalo</button>
+                    <button class="auth-btn" style="padding: 8px 5px; font-size: 11px; background: #dd4b39;" onclick="sendEmailRequest()">📧 Email</button>
+                </div>
+                <p id="copyAlert" style="color: #00b050; font-size: 11px; font-weight: bold; margin-top: 5px; height: 12px;"></p>
+            </div>
+            
+            <span class="link-text" style="color: #666;" onclick="switchAuthView('login')">← Quay lại Đăng nhập</span>
+        </div>
+
     </div>
 </div>
 
@@ -203,10 +252,15 @@
 </div>
 
 <script>
+    // =====================================================================
+    // KHU VỰC CẤU HÌNH TÀI KHOẢN (ADMIN THÊM NGƯỜI DÙNG Ở ĐÂY)
+    // =====================================================================
+    const ADMIN_EMAIL = "trantuanlinh1902@gmail.com";
+    const ADMIN_ZALO = "0336111456";
     const USERS_LIST = {
         'ADMIN': { pass: '123456', name: 'Trần Tuấn Linh' },
-        'NHANVIEN01': { pass: 'nv123', name: 'Nguyễn Văn A' },
-        'TUANLINH': { pass: 'linh123', name: 'Trần Tuấn Linh' }
+        'TUANLINH': { pass: 'linh123', name: 'Trần Tuấn Linh' },
+        'HUYHOANG': { pass: 'hoang240', name: 'Nguyễn Huy Hoàng' }
     };
 
     let currentUser = '';
@@ -215,25 +269,70 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUH3godNdgOhHw0tNt0nOT4bJ9s0XXaVUovoCrF2hl8RHk7KymYK-fP5htWtHKpGHy/exec";
     let syncTimer = null;
 
+    // --- CÁC HÀM XỬ LÝ GIAO DIỆN XÁC THỰC ---
     function toggleViewPass() {
         const p = document.getElementById('passKey');
         p.type = p.type === 'password' ? 'text' : 'password';
     }
 
+    function switchAuthView(view) {
+        document.getElementById('loginMsg').innerText = "";
+        document.getElementById('copyAlert').innerText = "";
+        if(view === 'register') {
+            document.getElementById('viewLogin').style.display = 'none';
+            document.getElementById('viewRegister').style.display = 'block';
+        } else {
+            document.getElementById('viewLogin').style.display = 'block';
+            document.getElementById('viewRegister').style.display = 'none';
+        }
+    }
+
+    function generateRegRequest() {
+        const name = document.getElementById('regName').value.trim();
+        const dept = document.getElementById('regDept').value.trim();
+        if(!name || !dept) { alert("Vui lòng điền đầy đủ Họ tên và MSNV/Bộ phận!"); return; }
+        const msg = `Chào Admin Tuấn Linh,\nTôi là: ${name} (${dept})\nTôi yêu cầu cấp tài khoản truy cập bảng lương nội bộ.\nVui lòng phản hồi Tên đăng nhập và Mật khẩu giúp tôi. Cảm ơn!`;
+        document.getElementById('regMsgContent').value = msg;
+        document.getElementById('regResult').style.display = 'block';
+        document.getElementById('copyAlert').innerText = "Đã tạo xong! Bạn có thể Copy, gửi Zalo hoặc Email.";
+    }
+
+    function copyRegMsg() {
+        const copyText = document.getElementById('regMsgContent');
+        copyText.select();
+        document.execCommand("copy");
+        document.getElementById('copyAlert').innerText = "Đã copy! Hãy mở khung chat và dán tin nhắn.";
+    }
+
+    function sendZaloRequest() {
+        // Tự động sao chép trước khi mở Zalo để tiện lợi hơn
+        copyRegMsg(); 
+        // Mở link chat Zalo trực tiếp
+        window.open(`https://zalo.me/${ADMIN_ZALO}`, '_blank');
+        document.getElementById('copyAlert').innerText = "Đang mở Zalo... Hãy nhấn dán tin nhắn vào khung chat nhé.";
+    }
+
+    function sendEmailRequest() {
+        const msg = document.getElementById('regMsgContent').value;
+        const subject = encodeURIComponent("Yêu cầu cấp tài khoản Bảng Lương");
+        const body = encodeURIComponent(msg);
+        window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+    }
+
     function checkLogin() {
         const user = document.getElementById('userNameInput').value.trim().toUpperCase();
         const pass = document.getElementById('passKey').value.trim();
-
         if (USERS_LIST[user] && USERS_LIST[user].pass === pass) {
             currentUser = user;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[user].name;
             loadSavedData();
         } else {
-            document.getElementById('loginMsg').innerText = "Tên đăng nhập hoặc mật khẩu không chính xác!";
+            document.getElementById('loginMsg').innerText = "Sai thông tin! Vui lòng kiểm tra lại hoặc yêu cầu cấp mới.";
         }
     }
 
+    // --- CÁC HÀM XỬ LÝ LƯƠNG GIỮ NGUYÊN ---
     function clearUserData() {
         if(confirm("Xóa toàn bộ dữ liệu của tài khoản này?")) {
             localStorage.removeItem('db_user_' + currentUser);
@@ -252,14 +351,10 @@
         const now = new Date();
         const ds_with_year = `${d}-${m}-${y}`;
         let baseCls = '';
-        
         if(YELLOW.includes(ds_with_year)) baseCls = 'hol';
         else if(GREEN.includes(ds_with_year)) baseCls = 'spe';
         else if(new Date(y, m-1, d).getDay() === 0) baseCls = 'sun';
-
-        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) {
-            return baseCls ? baseCls + ' tod' : 'tod';
-        }
+        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return baseCls ? baseCls + ' tod' : 'tod';
         return baseCls;
     }
     
@@ -290,52 +385,24 @@
         document.querySelectorAll('.col input').forEach(i => i.addEventListener('input', calc));
     }
 
-    function parseN(id) { 
-        let el = document.getElementById(id);
-        return el ? parseFloat(el.value.toString().replace(/,/g, '')) || 0 : 0; 
-    }
+    function parseN(id) { let el = document.getElementById(id); return el ? parseFloat(el.value.toString().replace(/,/g, '')) || 0 : 0; }
 
     function calc() {
-        let cNgay = 0, cDem = 0, cNghi = 0, tienAnDemAuto = 0;
-        let totalOT_Row = 0;
-        let totalPhucLoi_R = 0;
-
-        const wins = document.querySelectorAll('.win');
-        const oins = document.querySelectorAll('.oin');
+        let cNgay = 0, cDem = 0, cNghi = 0, tienAnDemAuto = 0, totalOT_Row = 0, totalPhucLoi_R = 0;
+        const wins = document.querySelectorAll('.win'), oins = document.querySelectorAll('.oin');
 
         wins.forEach((i, idx) => {
-            let v = i.value.toLowerCase(); 
-            let cls = i.getAttribute('data-cls') || '';
-            let otVal = parseFloat(oins[idx].value) || 0;
-
-            // Bóc đúng số giờ Phúc Lợi ra, giữ nguyên OT ban đầu
-            if(otVal > 2) {
-                totalPhucLoi_R += 0.5;
-                totalOT_Row += (otVal - 0.5);
-            } else {
-                totalOT_Row += otVal;
-            }
-
+            let v = i.value.toLowerCase(), cls = i.getAttribute('data-cls') || '', otVal = parseFloat(oins[idx].value) || 0;
+            totalOT_Row += otVal;
+            if(otVal > 2) totalPhucLoi_R += 0.5;
             if(v==='x' || v==='n' || v==='1/2x') {
                 if(cls.includes('sun')) {
-                    if(v === 'x' || v === 'n') cNghi += 8; 
-                    else if(v === '1/2x') cNghi += 4;
+                    if(v === 'x' || v === 'n') cNghi += 8; else if(v === '1/2x') cNghi += 4;
                     if(v === 'n' && otVal > 2) tienAnDemAuto += 25000;
                 } else {
-                    let baseDay = 0;
-                    if(v === 'x' || v === 'n') baseDay = 1;
-                    else if (v === '1/2x') baseDay = 0.5;
-
-                    let extraNghiDays = 0;
-                    if (cls.includes('hol')) extraNghiDays = 2 * baseDay;
-                    else if (cls.includes('spe')) extraNghiDays = 1 * baseDay;
-
-                    if(v === 'x' || v === '1/2x') cNgay += baseDay;
-                    else if(v === 'n') {
-                        cDem += baseDay; 
-                        if(otVal > 2) tienAnDemAuto += 25000;
-                    }
-                    
+                    let baseDay = (v === 'x' || v === 'n') ? 1 : 0.5;
+                    let extraNghiDays = cls.includes('hol') ? 2 * baseDay : (cls.includes('spe') ? 1 * baseDay : 0);
+                    if(v === 'x' || v === '1/2x') cNgay += baseDay; else if(v === 'n') { cDem += baseDay; if(otVal > 2) tienAnDemAuto += 25000; }
                     cNghi += (extraNghiDays * 8);
                 }
             }
@@ -346,27 +413,16 @@
         document.getElementById('dB').value = cDem.toLocaleString();
         document.getElementById('dD').value = cNghi.toLocaleString();
         document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toLocaleString(); 
-        
         document.getElementById('dE').value = totalOT_Row.toLocaleString();
         document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString(); 
-
-        let pcCaDem = cDem * 25000; 
-        document.getElementById('v18').value = pcCaDem.toLocaleString();
-        
+        document.getElementById('v18').value = (cDem * 25000).toLocaleString();
         document.getElementById('v19').value = tienAnDemAuto.toLocaleString('en-US');
 
-        const bSal = parseN('bSal');
-        let tatCaPhuCap = parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31') + parseN('v32');
-        let iSal = bSal + tatCaPhuCap;
+        const bSal = parseN('bSal'), iSal = bSal + parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31') + parseN('v32');
         document.getElementById('iSal').value = iSal.toLocaleString('en-US');
-
-        const std = parseN('sDay') || 26;
-        const perH = iSal/std/8; 
+        const std = parseN('sDay') || 26, perH = iSal/std/8; 
         
-        const sD = (iSal/std) * cNgay;
-        const sN = (iSal/std) * cDem * 1.5; 
-        const sNghi = perH * 1.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
-        
+        const sD = (iSal/std) * cNgay, sN = (iSal/std) * cDem * 1.5, sNghi = perH * 1.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
         document.getElementById('v1').value = Math.round(sD).toLocaleString();
         document.getElementById('v2').value = Math.round(sN).toLocaleString();
         document.getElementById('v3').value = Math.round(sNghi).toLocaleString();
@@ -375,34 +431,23 @@
         const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.5];
         let totalTC_New = 0;
         for(let j=1; j<=12; j++){
-            let hours = parseN('dG_'+j);
-            let val = Math.round(hours * perH * rates[j-1]);
+            let val = Math.round(parseN('dG_'+j) * perH * rates[j-1]);
             document.getElementById('v6_'+j).value = val.toLocaleString();
             totalTC_New += val;
         }
-
-        let sTC_Dem = Math.round(parseN('dF') * perH * 2.15);
-        document.getElementById('v5').value = sTC_Dem.toLocaleString();
-        let s70 = Math.round(parseN('dO') * perH * 0.7);
-        document.getElementById('v13').value = s70.toLocaleString();
+        document.getElementById('v5').value = Math.round(parseN('dF') * perH * 2.15).toLocaleString();
+        document.getElementById('v13').value = Math.round(parseN('dO') * perH * 0.7).toLocaleString();
         
         const bhxh = Math.round(iSal*0.08), bhyt = Math.round(iSal*0.015), bhtn = Math.round(iSal*0.01);
         document.getElementById('v33').value = bhxh.toLocaleString();
         document.getElementById('v34').value = bhyt.toLocaleString();
         document.getElementById('v35').value = bhtn.toLocaleString();
 
-        let tnKhacManual = parseN('v23'); 
-        
-        // ĐÃ SỬA LỖI NHÂN ĐÔI: Loại bỏ tienAnDemAuto ra khỏi thuNhapChung vì v19 đã cộng rồi
-        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual;
-        let muc20 = parseN('v20');
-
-        let tnTruocThue = thuNhapChung + pcCaDem + parseN('v19') - (bhxh+bhyt+bhtn);
+        let thuNhapChung = sD + sN + sNghi + sO + parseN('v5') + totalTC_New + parseN('v13') + parseN('v14') + parseN('v23');
+        let tnTruocThue = thuNhapChung + parseN('v18') + parseN('v19') - (bhxh+bhyt+bhtn);
         document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
         
-        let tnTinhThue = tnTruocThue - 15500000 - (6200000 * (muc20 / 150000)); 
-        
-        let rate = "0%"; let tienThue = 0;
+        let tnTinhThue = tnTruocThue - 15500000 - (6200000 * (parseN('v20') / 150000)), rate = "0%", tienThue = 0;
         if (tnTinhThue > 0) {
             if (tnTinhThue <= 10000000) { rate = "5%"; tienThue = tnTinhThue * 0.05; }
             else if (tnTinhThue <= 30000000) { rate = "10%"; tienThue = tnTinhThue * 0.1 - 500000; }
@@ -413,9 +458,8 @@
         document.getElementById('taxRate').value = rate;
         document.getElementById('v38').value = Math.round(tienThue).toLocaleString();
 
-        let totalPlus = thuNhapChung + parseN('v15') + parseN('v16') + parseN('v17') + pcCaDem + parseN('v19') + muc20 + parseN('v21') + parseN('v22') + parseN('v24') + parseN('v25');
+        let totalPlus = thuNhapChung + parseN('v15') + parseN('v16') + parseN('v17') + parseN('v18') + parseN('v19') + parseN('v20') + parseN('v21') + parseN('v22') + parseN('v24') + parseN('v25');
         let totalMinus = (bhxh+bhyt+bhtn) + parseN('v36') + parseN('v37') + tienThue + parseN('v39') + parseN('v40') + parseN('v41') + parseN('v42');
-
         document.getElementById('final').innerText = Math.round(totalPlus - totalMinus).toLocaleString();
         saveData(); 
     }
@@ -432,35 +476,19 @@
         localStorage.setItem('db_user_' + currentUser, JSON.stringify(userDatabase));
         if(SCRIPT_URL.startsWith("http")) {
             clearTimeout(syncTimer);
-            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser].name + " (Đang lưu...)";
             syncTimer = setTimeout(() => {
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
-                    body: JSON.stringify({ user: currentUser, data: JSON.stringify(userDatabase) })
-                }).then(() => {
-                    document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser].name + " (Đã đồng bộ ✓)";
-                });
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ user: currentUser, data: JSON.stringify(userDatabase) }) });
             }, 1000);
         }
     }
 
     function loadSavedData() {
         if (!currentUser) return;
-        let btn = document.getElementById('userNameDisplay');
-        btn.innerText = "Đang tải từ Cloud...";
         fetch(SCRIPT_URL + "?user=" + currentUser)
-        .then(res => res.json())
-        .then(resData => {
-            if(resData.data) { applyData(JSON.parse(resData.data)); btn.innerText = "User: " + USERS_LIST[currentUser].name + " (Cloud ✓)"; }
-            else { loadLocalFallback(btn); }
-        }).catch(() => loadLocalFallback(btn));
-    }
-
-    function loadLocalFallback(btn) {
-        let saved = localStorage.getItem('db_user_' + currentUser);
-        if(saved) applyData(JSON.parse(saved));
-        btn.innerText = "User: " + USERS_LIST[currentUser].name + " (Offline Mode)";
+        .then(res => res.json()).then(resData => {
+            if(resData.data) applyData(JSON.parse(resData.data));
+            else { let saved = localStorage.getItem('db_user_' + currentUser); if(saved) applyData(JSON.parse(saved)); }
+        }).catch(() => { let saved = localStorage.getItem('db_user_' + currentUser); if(saved) applyData(JSON.parse(saved)); });
     }
 
     function applyData(db) {
@@ -493,9 +521,7 @@
 
     function formatMoney(input) {
         let val = input.value.replace(/\D/g, '');
-        if (val !== "") {
-            input.value = Number(val).toLocaleString('en-US');
-        }
+        if (val !== "") input.value = Number(val).toLocaleString('en-US');
     }
     
     document.querySelectorAll('.money-format').forEach(inp => {
@@ -503,12 +529,11 @@
     });
 
     document.getElementById('sDay').addEventListener('input', calc);
-    
     document.getElementById('userNameInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
     document.getElementById('passKey').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
-    
     ms.addEventListener('change', switchMonth); 
     ys.addEventListener('change', switchMonth); 
+    
     render(); 
 </script>
 </body>

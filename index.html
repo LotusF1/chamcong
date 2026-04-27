@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V49 (Fix lỗi xung đột ngày Hôm nay & Lễ)</title>
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V51 (Sửa Lỗi Cộng Kép Tiền Ăn Auto)</title>
     <style>
         :root {
             --bg-header: #c6efce;
@@ -46,8 +46,9 @@
         .login-box {
             padding: 40px; border: 2px solid #000; background: #fff;
             text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 320px;
         }
-        .pass-wrapper { position: relative; width: 250px; margin: 0 auto 15px auto; }
+        .pass-wrapper { position: relative; width: 100%; margin: 0 auto 15px auto; }
         .toggle-pass {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
             cursor: pointer; font-size: 18px; user-select: none;
@@ -58,14 +59,19 @@
 
 <div id="loginOverlay">
     <div class="login-box">
-        <h2 style="margin-top:0;">HỆ THỐNG CHẤM CÔNG</h2>
-        <p>Vui lòng nhập Mã Truy Cập được cấp</p>
+        <h2 style="margin-top:0; font-size: 20px;">HỆ THỐNG CHẤM CÔNG</h2>
+        <p style="color: #666; margin-bottom: 20px;">Vui lòng xác thực tài khoản</p>
+        
         <div class="pass-wrapper">
-            <input type="password" id="passKey" placeholder="Mã truy cập..." style="border:1px solid #000; padding:12px; width:100%; font-size:16px; text-align:center; box-sizing: border-box;">
-            <span class="toggle-pass" onclick="toggleViewPass()">👁️</span>
+            <input type="text" id="userNameInput" placeholder="Tên đăng nhập..." style="border:1px solid #000; padding:12px; width:100%; font-size:14px; text-align:center; box-sizing: border-box; margin-bottom: 10px;">
+            <div style="position: relative;">
+                <input type="password" id="passKey" placeholder="Mật khẩu..." style="border:1px solid #000; padding:12px; width:100%; font-size:14px; text-align:center; box-sizing: border-box;">
+                <span class="toggle-pass" onclick="toggleViewPass()">👁️</span>
+            </div>
         </div>
-        <button onclick="checkLogin()" style="padding:10px 40px; cursor:pointer; background:#00b050; color:white; border:none; font-weight:bold; font-size:14px;">ĐĂNG NHẬP</button>
-        <p id="loginMsg" style="color:red; margin-top:15px; font-weight:bold; height:20px;"></p>
+        
+        <button onclick="checkLogin()" style="padding:12px 40px; cursor:pointer; background:#00b050; color:white; border:none; font-weight:bold; font-size:14px; width: 100%; margin-top: 5px;">ĐĂNG NHẬP</button>
+        <p id="loginMsg" style="color:red; margin-top:15px; font-weight:bold; height:20px; font-size: 12px;"></p>
     </div>
 </div>
 
@@ -198,9 +204,9 @@
 
 <script>
     const USERS_LIST = {
-        'ADMIN001': 'Trần Tuấn Linh',
-        'NV12345': 'Nguyễn Văn A',
-        'NV67890': 'Trần Thị B'
+        'ADMIN': { pass: '123456', name: 'Trần Tuấn Linh' },
+        'NHANVIEN01': { pass: 'nv123', name: 'Nguyễn Văn A' },
+        'TUANLINH': { pass: 'linh123', name: 'Trần Tuấn Linh' }
     };
 
     let currentUser = '';
@@ -215,14 +221,16 @@
     }
 
     function checkLogin() {
-        const input = document.getElementById('passKey').value.trim().toUpperCase();
-        if (USERS_LIST[input]) {
-            currentUser = input;
+        const user = document.getElementById('userNameInput').value.trim().toUpperCase();
+        const pass = document.getElementById('passKey').value.trim();
+
+        if (USERS_LIST[user] && USERS_LIST[user].pass === pass) {
+            currentUser = user;
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[input];
+            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[user].name;
             loadSavedData();
         } else {
-            document.getElementById('loginMsg').innerText = "Mã truy cập không hợp lệ!";
+            document.getElementById('loginMsg').innerText = "Tên đăng nhập hoặc mật khẩu không chính xác!";
         }
     }
 
@@ -240,7 +248,6 @@
     for(let i=1; i<=12; i++) ms.innerHTML += `<option value="${i}" ${i==new Date().getMonth()+1?'selected':''}>${i}</option>`;
     for(let i=2024; i<=2030; i++) ys.innerHTML += `<option value="${i}" ${i==new Date().getFullYear()?'selected':''}>${i}</option>`;
 
-    // ĐÃ SỬA LẠI LOGIC CHỌN CLASS ĐỂ HỖ TRỢ "MÁC KÉP" (Vừa là Lễ, vừa là Hôm nay)
     function getCls(d, m, y) {
         const now = new Date();
         const ds_with_year = `${d}-${m}-${y}`;
@@ -298,14 +305,15 @@
 
         wins.forEach((i, idx) => {
             let v = i.value.toLowerCase(); 
-            // ĐÃ SỬA LẠI ĐỂ ĐỌC CHÍNH XÁC MÁC KÉP
             let cls = i.getAttribute('data-cls') || '';
             let otVal = parseFloat(oins[idx].value) || 0;
 
-            totalOT_Row += otVal;
-            
+            // Bóc đúng số giờ Phúc Lợi ra, giữ nguyên OT ban đầu
             if(otVal > 2) {
                 totalPhucLoi_R += 0.5;
+                totalOT_Row += (otVal - 0.5);
+            } else {
+                totalOT_Row += otVal;
             }
 
             if(v==='x' || v==='n' || v==='1/2x') {
@@ -385,10 +393,11 @@
 
         let tnKhacManual = parseN('v23'); 
         
-        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual + tienAnDemAuto;
+        // ĐÃ SỬA LỖI NHÂN ĐÔI: Loại bỏ tienAnDemAuto ra khỏi thuNhapChung vì v19 đã cộng rồi
+        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual;
         let muc20 = parseN('v20');
 
-        let tnTruocThue = thuNhapChung + pcCaDem - (bhxh+bhyt+bhtn);
+        let tnTruocThue = thuNhapChung + pcCaDem + parseN('v19') - (bhxh+bhyt+bhtn);
         document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
         
         let tnTinhThue = tnTruocThue - 15500000 - (6200000 * (muc20 / 150000)); 
@@ -423,14 +432,14 @@
         localStorage.setItem('db_user_' + currentUser, JSON.stringify(userDatabase));
         if(SCRIPT_URL.startsWith("http")) {
             clearTimeout(syncTimer);
-            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser] + " (Đang lưu...)";
+            document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser].name + " (Đang lưu...)";
             syncTimer = setTimeout(() => {
                 fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: {'Content-Type': 'text/plain;charset=utf-8'},
                     body: JSON.stringify({ user: currentUser, data: JSON.stringify(userDatabase) })
                 }).then(() => {
-                    document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser] + " (Đã đồng bộ ✓)";
+                    document.getElementById('userNameDisplay').innerText = "User: " + USERS_LIST[currentUser].name + " (Đã đồng bộ ✓)";
                 });
             }, 1000);
         }
@@ -443,7 +452,7 @@
         fetch(SCRIPT_URL + "?user=" + currentUser)
         .then(res => res.json())
         .then(resData => {
-            if(resData.data) { applyData(JSON.parse(resData.data)); btn.innerText = "User: " + USERS_LIST[currentUser] + " (Cloud ✓)"; }
+            if(resData.data) { applyData(JSON.parse(resData.data)); btn.innerText = "User: " + USERS_LIST[currentUser].name + " (Cloud ✓)"; }
             else { loadLocalFallback(btn); }
         }).catch(() => loadLocalFallback(btn));
     }
@@ -451,7 +460,7 @@
     function loadLocalFallback(btn) {
         let saved = localStorage.getItem('db_user_' + currentUser);
         if(saved) applyData(JSON.parse(saved));
-        btn.innerText = "User: " + USERS_LIST[currentUser] + " (Offline Mode)";
+        btn.innerText = "User: " + USERS_LIST[currentUser].name + " (Offline Mode)";
     }
 
     function applyData(db) {
@@ -494,7 +503,10 @@
     });
 
     document.getElementById('sDay').addEventListener('input', calc);
+    
+    document.getElementById('userNameInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
     document.getElementById('passKey').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
+    
     ms.addEventListener('change', switchMonth); 
     ys.addEventListener('change', switchMonth); 
     render(); 

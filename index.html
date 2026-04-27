@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V39 (Tách PC Thâm niên)</title>
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V48 (Tách Giờ OT & Sửa Tên Phúc Lợi)</title>
     <style>
         :root {
             --bg-header: #c6efce;
@@ -85,7 +85,7 @@
 
     <table style="width: 450px; margin-top: 15px;">
         <tr><td class="label-cell">Lương Cơ Bản / Basic salary:</td><td><input type="text" id="bSal" value="0" class="num bold money-format"></td></tr>
-        <tr><td class="label-cell">Lương đóng BHXH:</td><td><input type="text" id="iSal" value="0" class="num bold money-format"></td></tr>
+        <tr><td class="label-cell">Lương đóng BHXH (Auto):</td><td><input type="text" id="iSal" value="0" class="num bold" readonly style="color: #0070c0; background: #e8f4f8;" title="Tự động cộng Lương cơ bản với tất cả Phụ cấp Mục 3"></td></tr>
         <tr><td class="label-cell">Ngày công chuẩn (STD):</td><td><input type="number" id="sDay" value="26" class="num bold"></td></tr>
     </table>
 
@@ -116,7 +116,7 @@
                 <tr><td>21 Phụ cấp nhà</td><td><input id="v16" class="num money-format" value="0"></td></tr>
                 <tr><td>22 Phụ cấp CC</td><td><input id="v17" class="num money-format" value="0"></td></tr>
                 <tr><td>23 PC Ca đêm </td><td><input id="v18" class="num" readonly></td></tr>
-                <tr><td>24 PC Tiền ăn</td><td><input id="v19" class="num money-format" value="0"></td></tr>
+                <tr><td>24 PC Tiền ăn (Auto)</td><td><input id="v19" class="num" readonly title="Tự động cộng 25.000đ khi làm ca đêm có Tăng ca > 2h"></td></tr>
                 <tr><td>25 PC Con nhỏ</td><td><input id="v20" class="num money-format" value="0"></td></tr>
                 <tr><td>26 PC Kiểm kinh</td><td><input id="v21" class="num money-format" value="0"></td></tr>
                 <tr><td>27 PC Bằng cấp</td><td><input id="v22" class="num money-format" value="0"></td></tr>
@@ -154,7 +154,7 @@
                 <tr><td>29 PC Công việc</td><td><input id="v29" class="num money-format" value="0"></td></tr>
                 <tr><td>30 PC Độc hại</td><td><input id="v30" class="num money-format" value="0"></td></tr>
                 <tr><td>31 PC Đặc biệt</td><td><input id="v31" class="num money-format" value="0"></td></tr>
-                <tr><td>32 PC Thâm niên (Đã gộp vào BHXH)</td><td><input id="v32" class="num money-format" value="0" title="Khoản này mang tính chất hiển thị, không cộng dồn vào tổng thực lĩnh để tránh tính trùng"></td></tr>
+                <tr><td>32 PC Thâm niên</td><td><input id="v32" class="num money-format" value="0" title="Đã gộp vào BHXH"></td></tr>
             </table>
         </div>
 
@@ -178,7 +178,7 @@
                 <tr><td>o Trong giờ ca B 600%</td><td><input id="dG_9" value="0"> Giờ</td></tr>
                 <tr><td>p Ngoài giờ ca A- ca B 600%</td><td><input id="dG_10" value="0"> Giờ</td></tr>
                 <tr><td>q Ngoài giờ ca A 605%</td><td><input id="dG_11" value="0"> Giờ</td></tr>
-                <tr><td>r Phúc lợi tăng ca trên 2h</td><td><input id="dG_12" class="num" value="0"> Giờ</td></tr>
+                <tr><td>r Phúc lợi tăng ca trên 2h</td><td><input id="dG_12" readonly> Giờ</td></tr>
                 <tr><td>s Lương 70%</td><td><input id="dO" value="0"> Giờ</td></tr>
                 <tr><td>t Trễ, Sớm</td><td><input id="dP" value="0"> Giờ</td></tr>
                 <tr><td>u Nghỉ ko lương</td><td><input id="dQ" value="0"> Ngày</td></tr>
@@ -283,8 +283,9 @@
     }
 
     function calc() {
-        let cNgay = 0, cDem = 0, cNghi = 0;
+        let cNgay = 0, cDem = 0, cNghi = 0, tienAnDemAuto = 0;
         let totalOT_Row = 0;
+        let totalPhucLoi_R = 0;
 
         const wins = document.querySelectorAll('.win');
         const oins = document.querySelectorAll('.oin');
@@ -294,12 +295,19 @@
             let cls = i.getAttribute('data-cls');
             let otVal = parseFloat(oins[idx].value) || 0;
 
-            totalOT_Row += otVal;
+            // ĐÃ SỬA: Tách giờ OT - nếu lớn hơn 2 thì trừ 0.5 để đẩy xuống Phúc lợi
+            if(otVal > 2) {
+                totalPhucLoi_R += 0.5;
+                totalOT_Row += (otVal - 0.5);
+            } else {
+                totalOT_Row += otVal;
+            }
 
             if(v==='x' || v==='n' || v==='1/2x') {
                 if(cls === 'sun') {
                     if(v === 'x' || v === 'n') cNghi += 8; 
                     else if(v === '1/2x') cNghi += 4;
+                    if(v === 'n' && otVal > 2) tienAnDemAuto += 25000;
                 } else {
                     let baseDay = 0;
                     if(v === 'x' || v === 'n') baseDay = 1;
@@ -310,7 +318,10 @@
                     else if (cls === 'spe') extraNghiDays = 1 * baseDay;
 
                     if(v === 'x' || v === '1/2x') cNgay += baseDay;
-                    else if(v === 'n') cDem += baseDay; 
+                    else if(v === 'n') {
+                        cDem += baseDay; 
+                        if(otVal > 2) tienAnDemAuto += 25000;
+                    }
                     
                     cNghi += (extraNghiDays * 8);
                 }
@@ -321,14 +332,24 @@
         document.getElementById('dA').value = cNgay.toLocaleString();
         document.getElementById('dB').value = cDem.toLocaleString();
         document.getElementById('dD').value = cNghi.toLocaleString();
-        document.getElementById('rO').innerText = totalOT_Row.toLocaleString(); 
+        
+        // Tổng bảng ngang vẫn giữ nguyên tổng cộng để dễ kiểm tra
+        document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toLocaleString(); 
         
         document.getElementById('dE').value = totalOT_Row.toLocaleString();
+        document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString(); 
 
         let pcCaDem = cDem * 25000; 
         document.getElementById('v18').value = pcCaDem.toLocaleString();
+        
+        document.getElementById('v19').value = tienAnDemAuto.toLocaleString('en-US');
 
-        const bSal = parseN('bSal'), iSal = parseN('iSal'), std = parseN('sDay') || 26;
+        const bSal = parseN('bSal');
+        let tatCaPhuCap = parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31') + parseN('v32');
+        let iSal = bSal + tatCaPhuCap;
+        document.getElementById('iSal').value = iSal.toLocaleString('en-US');
+
+        const std = parseN('sDay') || 26;
         const perH = iSal/std/8; 
         
         const sD = (iSal/std) * cNgay;
@@ -360,13 +381,12 @@
         document.getElementById('v35').value = bhtn.toLocaleString();
 
         let tnKhacManual = parseN('v23'); 
-        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual;
         
-        // Loại bỏ v32 (PC Thâm niên) ra khỏi công thức cộng để tránh trùng lắp
-        let phuCapChung = parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31');
+        // ĐÃ SỬA LỖI NHÂN ĐÔI: Loại bỏ tienAnDemAuto ra khỏi thuNhapChung
+        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual;
         let muc20 = parseN('v20');
 
-        let tnTruocThue = thuNhapChung + phuCapChung + pcCaDem - (bhxh+bhyt+bhtn);
+        let tnTruocThue = thuNhapChung + pcCaDem + parseN('v19') - (bhxh+bhyt+bhtn);
         document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
         
         let tnTinhThue = tnTruocThue - 15500000 - (6200000 * (muc20 / 150000)); 
@@ -382,7 +402,8 @@
         document.getElementById('taxRate').value = rate;
         document.getElementById('v38').value = Math.round(tienThue).toLocaleString();
 
-        let totalPlus = thuNhapChung + phuCapChung + parseN('v15') + parseN('v16') + parseN('v17') + pcCaDem + parseN('v19') + muc20 + parseN('v21') + parseN('v22') + parseN('v24') + parseN('v25');
+        // Cộng parseN('v19') một lần duy nhất vào tổng thực lĩnh
+        let totalPlus = thuNhapChung + parseN('v15') + parseN('v16') + parseN('v17') + pcCaDem + parseN('v19') + muc20 + parseN('v21') + parseN('v22') + parseN('v24') + parseN('v25');
         let totalMinus = (bhxh+bhyt+bhtn) + parseN('v36') + parseN('v37') + tienThue + parseN('v39') + parseN('v40') + parseN('v41') + parseN('v42');
 
         document.getElementById('final').innerText = Math.round(totalPlus - totalMinus).toLocaleString();

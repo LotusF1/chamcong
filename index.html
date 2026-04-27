@@ -291,7 +291,7 @@
         const name = document.getElementById('regName').value.trim();
         const dept = document.getElementById('regDept').value.trim();
         if(!name || !dept) { alert("Vui lòng điền đầy đủ Họ tên và MSNV/Bộ phận!"); return; }
-        const msg = `Chào Admin Tuấn Linh,\nTôi là: ${name} (${dept})\nTôi yêu cầu cấp tài khoản truy cập bảng lương nội bộ.\nVui lòng phản hồi Tên đăng nhập và Mật khẩu giúp tôi. Cảm ơn!`;
+        const msg = `Chào Admin,\nTôi là: ${name} (${dept})\nTôi yêu cầu cấp tài khoản truy cập bảng lương & chấm công nội bộ.\nVui lòng phản hồi Tên đăng nhập và Mật khẩu giúp tôi. Cảm ơn!`;
         document.getElementById('regMsgContent').value = msg;
         document.getElementById('regResult').style.display = 'block';
         document.getElementById('copyAlert').innerText = "Đã tạo xong! Bạn có thể Copy, gửi Zalo hoặc Email.";

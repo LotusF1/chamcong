@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V48 (Tách Giờ OT & Sửa Tên Phúc Lợi)</title>
+    <title>Hệ Thống Quản Lý Lương Chính Xác 100% - V49 (Fix lỗi xung đột ngày Hôm nay & Lễ)</title>
     <style>
         :root {
             --bg-header: #c6efce;
@@ -240,14 +240,20 @@
     for(let i=1; i<=12; i++) ms.innerHTML += `<option value="${i}" ${i==new Date().getMonth()+1?'selected':''}>${i}</option>`;
     for(let i=2024; i<=2030; i++) ys.innerHTML += `<option value="${i}" ${i==new Date().getFullYear()?'selected':''}>${i}</option>`;
 
+    // ĐÃ SỬA LẠI LOGIC CHỌN CLASS ĐỂ HỖ TRỢ "MÁC KÉP" (Vừa là Lễ, vừa là Hôm nay)
     function getCls(d, m, y) {
         const now = new Date();
         const ds_with_year = `${d}-${m}-${y}`;
-        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return 'tod';
-        if(YELLOW.includes(ds_with_year)) return 'hol';
-        if(GREEN.includes(ds_with_year)) return 'spe';
-        if(new Date(y, m-1, d).getDay() === 0) return 'sun';
-        return '';
+        let baseCls = '';
+        
+        if(YELLOW.includes(ds_with_year)) baseCls = 'hol';
+        else if(GREEN.includes(ds_with_year)) baseCls = 'spe';
+        else if(new Date(y, m-1, d).getDay() === 0) baseCls = 'sun';
+
+        if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) {
+            return baseCls ? baseCls + ' tod' : 'tod';
+        }
+        return baseCls;
     }
     
     function render() {
@@ -292,19 +298,18 @@
 
         wins.forEach((i, idx) => {
             let v = i.value.toLowerCase(); 
-            let cls = i.getAttribute('data-cls');
+            // ĐÃ SỬA LẠI ĐỂ ĐỌC CHÍNH XÁC MÁC KÉP
+            let cls = i.getAttribute('data-cls') || '';
             let otVal = parseFloat(oins[idx].value) || 0;
 
-            // ĐÃ SỬA: Tách giờ OT - nếu lớn hơn 2 thì trừ 0.5 để đẩy xuống Phúc lợi
+            totalOT_Row += otVal;
+            
             if(otVal > 2) {
                 totalPhucLoi_R += 0.5;
-                totalOT_Row += (otVal - 0.5);
-            } else {
-                totalOT_Row += otVal;
             }
 
             if(v==='x' || v==='n' || v==='1/2x') {
-                if(cls === 'sun') {
+                if(cls.includes('sun')) {
                     if(v === 'x' || v === 'n') cNghi += 8; 
                     else if(v === '1/2x') cNghi += 4;
                     if(v === 'n' && otVal > 2) tienAnDemAuto += 25000;
@@ -314,8 +319,8 @@
                     else if (v === '1/2x') baseDay = 0.5;
 
                     let extraNghiDays = 0;
-                    if (cls === 'hol') extraNghiDays = 2 * baseDay;
-                    else if (cls === 'spe') extraNghiDays = 1 * baseDay;
+                    if (cls.includes('hol')) extraNghiDays = 2 * baseDay;
+                    else if (cls.includes('spe')) extraNghiDays = 1 * baseDay;
 
                     if(v === 'x' || v === '1/2x') cNgay += baseDay;
                     else if(v === 'n') {
@@ -332,8 +337,6 @@
         document.getElementById('dA').value = cNgay.toLocaleString();
         document.getElementById('dB').value = cDem.toLocaleString();
         document.getElementById('dD').value = cNghi.toLocaleString();
-        
-        // Tổng bảng ngang vẫn giữ nguyên tổng cộng để dễ kiểm tra
         document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toLocaleString(); 
         
         document.getElementById('dE').value = totalOT_Row.toLocaleString();
@@ -382,11 +385,10 @@
 
         let tnKhacManual = parseN('v23'); 
         
-        // ĐÃ SỬA LỖI NHÂN ĐÔI: Loại bỏ tienAnDemAuto ra khỏi thuNhapChung
-        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual;
+        let thuNhapChung = sD + sN + sNghi + sO + sTC_Dem + totalTC_New + s70 + parseN('v14') + tnKhacManual + tienAnDemAuto;
         let muc20 = parseN('v20');
 
-        let tnTruocThue = thuNhapChung + pcCaDem + parseN('v19') - (bhxh+bhyt+bhtn);
+        let tnTruocThue = thuNhapChung + pcCaDem - (bhxh+bhyt+bhtn);
         document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
         
         let tnTinhThue = tnTruocThue - 15500000 - (6200000 * (muc20 / 150000)); 
@@ -402,7 +404,6 @@
         document.getElementById('taxRate').value = rate;
         document.getElementById('v38').value = Math.round(tienThue).toLocaleString();
 
-        // Cộng parseN('v19') một lần duy nhất vào tổng thực lĩnh
         let totalPlus = thuNhapChung + parseN('v15') + parseN('v16') + parseN('v17') + pcCaDem + parseN('v19') + muc20 + parseN('v21') + parseN('v22') + parseN('v24') + parseN('v25');
         let totalMinus = (bhxh+bhyt+bhtn) + parseN('v36') + parseN('v37') + tienThue + parseN('v39') + parseN('v40') + parseN('v41') + parseN('v42');
 

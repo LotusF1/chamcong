@@ -394,8 +394,11 @@
 
         wins.forEach((i, idx) => {
             let v = i.value.toLowerCase(), cls = i.getAttribute('data-cls') || '', otVal = parseFloat(oins[idx].value) || 0;
-            totalOT_Row += otVal;
-            if(otVal > 2) totalPhucLoi_R += 0.5;
+            // OT tính độc lập — không cần ô Đi làm có giá trị
+            if(otVal > 0) {
+                totalOT_Row += otVal;
+                if(otVal > 2) totalPhucLoi_R += 0.5;
+            }
             if(v==='x' || v==='n' || v==='1/2x') {
                 if(cls.includes('sun')) {
                     if(v === 'x' || v === 'n') cNghi += 8; else if(v === '1/2x') cNghi += 4;
@@ -413,7 +416,7 @@
         document.getElementById('dA').value = cNgay.toLocaleString();
         document.getElementById('dB').value = cDem.toLocaleString();
         document.getElementById('dD').value = cNghi.toLocaleString();
-        document.getElementById('rO').innerText = (totalOT_Row + totalPhucLoi_R).toLocaleString(); 
+        document.getElementById('rO').innerText = totalOT_Row.toLocaleString(); // chỉ hiển thị giờ OT thực tế, phúc lợi tính riêng ở dG_12
         document.getElementById('dE').value = totalOT_Row.toLocaleString();
         document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString(); 
         document.getElementById('v18').value = (cDem * 25000).toLocaleString();
@@ -448,13 +451,21 @@
         let tnTruocThue = thuNhapChung + parseN('v18') + parseN('v19') - (bhxh+bhyt+bhtn);
         document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
         
-        let tnTinhThue = tnTruocThue - 15500000 - (6200000 * (parseN('v20') / 150000)), rate = "0%", tienThue = 0;
+        // Giảm trừ gia cảnh từ 01/01/2026 (Nghị quyết 110/2025/UBTVQH15)
+        // Bản thân: 15.500.000đ/tháng | Người phụ thuộc: 6.200.000đ/tháng
+        const soNguoiPT = Math.round(parseN('v20') / 150000); // v20 nhập theo đơn vị 150k/người
+        let tnTinhThue = tnTruocThue - 15500000 - (6200000 * soNguoiPT);
+        let rate = "0%", tienThue = 0;
+        // Biểu thuế lũy tiến 5 bậc — áp dụng từ 01/01/2026
+        // Căn cứ: Điều 9 Luật Thuế TNCN 2025 (Luật số 109/2025/QH15)
+        // Bậc 1: ≤ 10tr → 5% | Bậc 2: ≤ 30tr → 10% | Bậc 3: ≤ 60tr → 20%
+        // Bậc 4: ≤ 100tr → 30% | Bậc 5: > 100tr → 35%
         if (tnTinhThue > 0) {
-            if (tnTinhThue <= 10000000) { rate = "5%"; tienThue = tnTinhThue * 0.05; }
-            else if (tnTinhThue <= 30000000) { rate = "10%"; tienThue = tnTinhThue * 0.1 - 500000; }
-            else if (tnTinhThue <= 60000000) { rate = "20%"; tienThue = tnTinhThue * 0.2 - 3500000; }
-            else if (tnTinhThue <= 100000000) { rate = "30%"; tienThue = tnTinhThue * 0.3 - 9500000; }
-            else { rate = "35%"; tienThue = tnTinhThue * 0.35 - 14500000; }
+            if      (tnTinhThue <= 10000000)  { rate = "5%";  tienThue = tnTinhThue * 0.05; }
+            else if (tnTinhThue <= 30000000)  { rate = "10%"; tienThue = tnTinhThue * 0.10 - 500000; }
+            else if (tnTinhThue <= 60000000)  { rate = "20%"; tienThue = tnTinhThue * 0.20 - 3500000; }
+            else if (tnTinhThue <= 100000000) { rate = "30%"; tienThue = tnTinhThue * 0.30 - 9500000; }
+            else                              { rate = "35%"; tienThue = tnTinhThue * 0.35 - 14500000; }
         }
         document.getElementById('taxRate').value = rate;
         document.getElementById('v38').value = Math.round(tienThue).toLocaleString();
@@ -477,9 +488,9 @@
         localStorage.setItem('db_user_' + currentUser, JSON.stringify(userDatabase));
         if(SCRIPT_URL.startsWith("http")) {
             clearTimeout(syncTimer);
-            syncTimer = setTimeout(() => {
+            syncTimer = setTimeout(() => { // debounce 2.5 giây
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ user: currentUser, data: JSON.stringify(userDatabase) }) });
-            }, 1000);
+            }, 2500);
         }
     }
 
@@ -493,14 +504,22 @@
     }
 
     function applyData(db) {
-        userDatabase = db || {};
-        if (userDatabase.att) {
-            let old_m_y = (userDatabase.m || ms.value) + "_" + (userDatabase.y || ys.value);
-            let oldData = JSON.parse(JSON.stringify(userDatabase));
+        if (!db) { userDatabase = {}; switchMonth(); return; }
+        // Phát hiện format cũ (dữ liệu lưu trực tiếp, không phân tháng)
+        // Dấu hiệu: có key 'att' hoặc 'bSal' ở root thay vì key dạng "m_y"
+        const keys = Object.keys(db);
+        const isOldFormat = keys.includes('att') || keys.includes('bSal');
+        if (isOldFormat) {
+            // Chuyển đổi sang format mới: gói vào tháng/năm hiện tại
+            const m_y = ms.value + "_" + ys.value;
             userDatabase = {};
-            userDatabase[old_m_y] = oldData;
+            userDatabase[m_y] = db;
+            console.log("applyData: Chuyển đổi format cũ → tháng", m_y);
+        } else {
+            // Format mới: đã phân tháng, dùng trực tiếp
+            userDatabase = db;
         }
-        switchMonth(); 
+        switchMonth();
     }
 
     function switchMonth() {

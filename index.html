@@ -389,15 +389,22 @@
     function parseN(id) { let el = document.getElementById(id); return el ? parseFloat(el.value.toString().replace(/,/g, '')) || 0 : 0; }
 
     function calc() {
-        let cNgay = 0, cDem = 0, cNghi = 0, tienAnDemAuto = 0, totalOT_Row = 0, totalPhucLoi_R = 0;
+        let cNgay = 0, cDem = 0, cNghi = 0, tienAnDemAuto = 0, totalOT_Row = 0, totalPhucLoi_R = 0, totalOT_Display = 0;
         const wins = document.querySelectorAll('.win'), oins = document.querySelectorAll('.oin');
 
         wins.forEach((i, idx) => {
             let v = i.value.toLowerCase(), cls = i.getAttribute('data-cls') || '', otVal = parseFloat(oins[idx].value) || 0;
             // OT tính độc lập — không cần ô Đi làm có giá trị
+            // Nếu OT > 2h: phần e = OT - 0.5, phần r = +0.5
+            // Nếu OT ≤ 2h: phần e = OT, r = 0
             if(otVal > 0) {
-                totalOT_Row += otVal;
-                if(otVal > 2) totalPhucLoi_R += 0.5;
+                totalOT_Display += otVal;          // hiển thị ở cột OT bảng chấm công
+                if(otVal >= 2) {
+                    totalOT_Row += (otVal - 0.5); // e = giờ OT trừ phần phúc lợi
+                    totalPhucLoi_R += 0.5;        // r = 0.5h thưởng (OT >= 2h)
+                } else {
+                    totalOT_Row += otVal;          // e = giờ OT thực tế, không có phúc lợi (OT < 2h)
+                }
             }
             if(v==='x' || v==='n' || v==='1/2x') {
                 if(cls.includes('sun')) {
@@ -416,8 +423,8 @@
         document.getElementById('dA').value = cNgay.toLocaleString();
         document.getElementById('dB').value = cDem.toLocaleString();
         document.getElementById('dD').value = cNghi.toLocaleString();
-        document.getElementById('rO').innerText = totalOT_Row.toLocaleString(); // chỉ hiển thị giờ OT thực tế, phúc lợi tính riêng ở dG_12
-        document.getElementById('dE').value = totalOT_Row.toLocaleString();
+        document.getElementById('rO').innerText = totalOT_Display.toLocaleString(); // hiển thị đúng giờ OT thực tế nhập vào
+        document.getElementById('dE').value = totalOT_Row.toLocaleString(); // tổng OT thực tế nhập vào (r là phần thưởng cộng thêm, không trừ)
         document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString(); 
         document.getElementById('v18').value = (cDem * 25000).toLocaleString();
         document.getElementById('v19').value = tienAnDemAuto.toLocaleString('en-US');

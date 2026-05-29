@@ -22,6 +22,7 @@
 
         .sun { background: var(--bg-sunday) !important; color: white; }
         .hol { background: var(--bg-holiday) !important; }
+        .hol-orange { background: #FF6600 !important; color: white; }
         .spe { background: var(--bg-special) !important; color: white; }
         .tod { background: var(--bg-today) !important; }
         .night-shift { background: var(--bg-night) !important; color: #ffff00 !important; font-weight: bold; }
@@ -141,7 +142,7 @@
     <table style="width: 450px; margin-top: 15px;">
         <tr><td class="label-cell">Lương Cơ Bản / Basic salary:</td><td><input type="text" id="bSal" value="0" class="num bold money-format"></td></tr>
         <tr><td class="label-cell">Lương đóng BHXH (Auto):</td><td><input type="text" id="iSal" value="0" class="num bold" readonly style="color: #0070c0; background: #e8f4f8;" title="Tự động cộng Lương cơ bản với tất cả Phụ cấp Mục 3"></td></tr>
-        <tr><td class="label-cell">Ngày công chuẩn (STD):</td><td><input type="number" id="sDay" value="26" class="num bold"></td></tr>
+        <tr><td class="label-cell">Ngày công chuẩn (Auto):</td><td><input type="number" id="sDay" value="26" class="num bold" readonly style="color:#0070c0;background:#e8f4f8;" title="Tự động tính: 21 tháng trước → 20 tháng này, trừ Chủ nhật"></td></tr>
     </table>
 
     <div class="salary-container">
@@ -222,7 +223,7 @@
                 <tr><td>d Công ngày nghỉ</td><td><input id="dD" readonly> Giờ</td></tr>
                 <tr><td>e Tăng ca ngày 150%</td><td><input id="dE" readonly> Giờ</td></tr>
                 <tr><td>f Tăng ca đêm 215%</td><td><input id="dF" value="0"> Giờ</td></tr>
-                <tr><td>g Ngoài giờ ca A-ca B 150%</td><td><input id="dG_1" value="0"> Giờ</td></tr>
+                <tr><td>g Ngoài giờ ca A-ca B 150%</td><td><input id="dG_1" value="0" readonly style="color:#0070c0;background:#e8f4f8;"> Giờ</td></tr>
                 <tr><td>h Ngoài giờ ca A 215%</td><td><input id="dG_2" value="0"> Giờ</td></tr>
                 <tr><td>i Trong giờ ca A 200%</td><td><input id="dG_3" value="0"> Giờ</td></tr>
                 <tr><td>j Trong giờ ca B 150%</td><td><input id="dG_4" value="0"> Giờ</td></tr>
@@ -341,7 +342,8 @@
         }
     }
 
-    const YELLOW = ["1-1-2026", "16-2-2026", "17-2-2026", "18-2-2026", "19-2-2026", "20-2-2026", "26-4-2026", "27-4-2026", "30-4-2026", "1-5-2026", "17-8-2026", "1-9-2026", "2-9-2026"];
+    const YELLOW = ["1-1-2026", "16-2-2026", "17-2-2026", "18-2-2026", "19-2-2026", "20-2-2026", "26-4-2026", "30-4-2026", "1-5-2026", "17-8-2026", "1-9-2026", "2-9-2026"];
+    const ORANGE = ["27-4-2026"];
     const GREEN = ["10-1-2026", "24-1-2026", "14-2-2026", "21-2-2026", "14-3-2026", "28-3-2026", "11-4-2026", "28-4-2026", "29-4-2026", "2-5-2026", "16-5-2026", "30-5-2026", "13-6-2026", "27-6-2026", "11-7-2026", "25-7-2026", "8-8-2026", "13-8-2026", "14-8-2026", "15-8-2026", "29-8-2026", "31-8-2026", "12-9-2026", "26-9-2026", "10-10-2026", "25-10-2026", "7-11-2026", "21-11-2026", "5-12-2026", "19-12-2026", "30-12-2026", "31-12-2026"];
 
     const ms = document.getElementById('m'), ys = document.getElementById('y');
@@ -351,10 +353,13 @@
     function getCls(d, m, y) {
         const now = new Date();
         const ds_with_year = `${d}-${m}-${y}`;
+        const isSunday = new Date(y, m-1, d).getDay() === 0;
         let baseCls = '';
-        if(YELLOW.includes(ds_with_year)) baseCls = 'hol';
+        // CN luôn ưu tiên dù ngày đó trùng lễ/xanh
+        if(isSunday) baseCls = 'sun';
+        else if(ORANGE.includes(ds_with_year)) baseCls = 'hol-orange';
+        else if(YELLOW.includes(ds_with_year)) baseCls = 'hol';
         else if(GREEN.includes(ds_with_year)) baseCls = 'spe';
-        else if(new Date(y, m-1, d).getDay() === 0) baseCls = 'sun';
         if(d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear()) return baseCls ? baseCls + ' tod' : 'tod';
         return baseCls;
     }
@@ -371,7 +376,7 @@
         const w = ["CN","T2","T3","T4","T5","T6","T7"];
         days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}">${w[new Date(i.y, i.m-1, i.d).getDay()]}</td>`; });
         h += `</tr><tr><td class="bold">Đi làm</td>`;
-        days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}"><input class="win" data-cls="${cls}"></td>`; });
+        days.forEach(i => { let cls = getCls(i.d, i.m, i.y); let dow = new Date(i.y, i.m-1, i.d).getDay(); h += `<td class="${cls}"><input class="win" data-cls="${cls}" data-dow="${dow}"></td>`; });
         h += `<td id="rW" class="bold">0</td><td>-</td></tr><tr><td class="bold">Tăng ca</td>`;
         days.forEach(i => { let cls = getCls(i.d, i.m, i.y); h += `<td class="${cls}"><input class="oin"></td>`; });
         h += `<td>-</td><td id="rO" class="bold">0</td></tr></table>`;
@@ -384,48 +389,108 @@
         }));
         document.querySelectorAll('.oin').forEach(i => i.addEventListener('input', calc));
         document.querySelectorAll('.col input').forEach(i => i.addEventListener('input', calc));
+        calcStdDays();
+    }
+
+    // Tự động tính ngày công chuẩn: từ ngày 21 tháng trước → 20 tháng này, trừ CN
+    function calcStdDays() {
+        const m = parseInt(ms.value), y = parseInt(ys.value);
+        const pm = m === 1 ? 12 : m - 1;
+        const py = m === 1 ? y - 1 : y;
+        let count = 0;
+        // Từ 21 tháng trước đến hết tháng trước
+        const dpm = new Date(py, pm, 0).getDate();
+        for(let d = 21; d <= dpm; d++) {
+            if(new Date(py, pm-1, d).getDay() !== 0) count++;
+        }
+        // Từ 1 đến 20 tháng này
+        for(let d = 1; d <= 20; d++) {
+            if(new Date(y, m-1, d).getDay() !== 0) count++;
+        }
+        const sDayEl = document.getElementById('sDay');
+        sDayEl.value = count;
+        sDayEl.title = 'Tự động tính: 21/' + pm + '/' + py + ' → 20/' + m + '/' + y + ' trừ CN = ' + count + ' ngày';
     }
 
     function parseN(id) { let el = document.getElementById(id); return el ? parseFloat(el.value.toString().replace(/,/g, '')) || 0 : 0; }
 
     function calc() {
         let cNgay = 0, cDem = 0, cNghi = 0, tienAnDemAuto = 0, totalOT_Row = 0, totalPhucLoi_R = 0, totalOT_Display = 0;
+        let totalOT_NghiRow = 0; // OT ngày nghỉ → vào dG_1
         const wins = document.querySelectorAll('.win'), oins = document.querySelectorAll('.oin');
 
         wins.forEach((i, idx) => {
             let v = i.value.toLowerCase(), cls = i.getAttribute('data-cls') || '', otVal = parseFloat(oins[idx].value) || 0;
-            // OT tính độc lập — không cần ô Đi làm có giá trị
-            // Nếu OT > 2h: phần e = OT - 0.5, phần r = +0.5
-            // Nếu OT ≤ 2h: phần e = OT, r = 0
+            const isNghiDay = cls.includes('sun') || cls.includes('hol') || cls.includes('hol-orange') || cls.includes('spe');
+
             if(otVal > 0) {
-                totalOT_Display += otVal;          // hiển thị ở cột OT bảng chấm công
-                if(otVal >= 2) {
-                    totalOT_Row += (otVal - 0.5); // e = giờ OT trừ phần phúc lợi
-                    totalPhucLoi_R += 0.5;        // r = 0.5h thưởng (OT >= 2h)
+                totalOT_Display += otVal;
+                if(isNghiDay) {
+                    // Ngày nghỉ: OT → hàng g (dG_1), tính phúc lợi
+                    if(otVal >= 2) {
+                        totalOT_NghiRow += (otVal - 0.5);
+                        totalPhucLoi_R += 0.5;
+                    } else {
+                        totalOT_NghiRow += otVal;
+                    }
                 } else {
-                    totalOT_Row += otVal;          // e = giờ OT thực tế, không có phúc lợi (OT < 2h)
+                    // Ngày thường: OT → hàng e (dE)
+                    if(otVal >= 2) {
+                        totalOT_Row += (otVal - 0.5);
+                        totalPhucLoi_R += 0.5;
+                    } else {
+                        totalOT_Row += otVal;
+                    }
                 }
             }
-            if(v==='x' || v==='n' || v==='1/2x') {
-                if(cls.includes('sun')) {
-                    if(v === 'x' || v === 'n') cNghi += 8; else if(v === '1/2x') cNghi += 4;
+            // Phân loại ngày
+            const isSun = cls.includes('sun');
+            const isHolOrSpe = isNghiDay && !isSun;
+            const isHolNotSpe = cls.includes('hol') || cls.includes('hol-orange');
+
+            if(isSun) {
+                // CN: chỉ tính khi nhập x/n/1/2x → công ngày nghỉ
+                if(v==='x' || v==='n' || v==='1/2x') {
+                    if(v === 'x' || v === 'n') cNghi += 8; else cNghi += 4;
                     if(v === 'n' && otVal > 2) tienAnDemAuto += 25000;
+                }
+            } else if(isHolOrSpe) {
+                // Lễ/Xanh (kể cả T7): luôn tính 1 công vào a dù trống
+                const hasWork = v==='x' || v==='n' || v==='1/2x';
+                if(v === 'n') {
+                    cDem += 1; // đêm → sang hàng b
+                    if(otVal > 2) tienAnDemAuto += 25000;
+                } else if(v === '1/2x') {
+                    cNgay += 0.5;
                 } else {
+                    cNgay += 1; // trống hoặc x → 1 công ngày
+                }
+                // Nếu đi làm thêm → công ngày nghỉ (hàng d)
+                if(hasWork) {
+                    let baseDay = (v === '1/2x') ? 0.5 : 1;
+                    let rate = isHolNotSpe ? 2 : 1;
+                    cNghi += (rate * baseDay * 8);
+                }
+            } else {
+                // Ngày trắng thường
+                if(v==='x' || v==='n' || v==='1/2x') {
                     let baseDay = (v === 'x' || v === 'n') ? 1 : 0.5;
-                    let extraNghiDays = cls.includes('hol') ? 2 * baseDay : (cls.includes('spe') ? 1 * baseDay : 0);
-                    if(v === 'x' || v === '1/2x') cNgay += baseDay; else if(v === 'n') { cDem += baseDay; if(otVal > 2) tienAnDemAuto += 25000; }
-                    cNghi += (extraNghiDays * 8);
+                    if(v === 'x' || v === '1/2x') cNgay += baseDay;
+                    else if(v === 'n') { cDem += baseDay; if(otVal > 2) tienAnDemAuto += 25000; }
                 }
             }
         });
 
-        document.getElementById('rW').innerText = (cNgay + cDem + (cNghi/8)).toLocaleString(); 
+        document.getElementById('rW').innerText = (cNgay + cDem).toLocaleString(); 
         document.getElementById('dA').value = cNgay.toLocaleString();
         document.getElementById('dB').value = cDem.toLocaleString();
         document.getElementById('dD').value = cNghi.toLocaleString();
-        document.getElementById('rO').innerText = totalOT_Display.toLocaleString(); // hiển thị đúng giờ OT thực tế nhập vào
-        document.getElementById('dE').value = totalOT_Row.toLocaleString(); // tổng OT thực tế nhập vào (r là phần thưởng cộng thêm, không trừ)
-        document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString(); 
+        document.getElementById('rO').innerText = totalOT_Display.toLocaleString();
+        document.getElementById('dE').value = totalOT_Row.toLocaleString();
+        document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString();
+        // OT ngày nghỉ → hàng g (dG_1), chỉ auto
+        const dG1El = document.getElementById('dG_1');
+        dG1El.value = totalOT_NghiRow.toLocaleString();
         document.getElementById('v18').value = (cDem * 25000).toLocaleString();
         document.getElementById('v19').value = tienAnDemAuto.toLocaleString('en-US');
 
@@ -486,7 +551,7 @@
     function saveData() {
         if (!currentUser) return;
         const monthData = {};
-        document.querySelectorAll('input').forEach(inp => { if(inp.id && !inp.readOnly) monthData[inp.id] = inp.value; });
+        document.querySelectorAll('input').forEach(inp => { if(inp.id && !inp.readOnly && inp.id !== 'sDay') monthData[inp.id] = inp.value; });
         const att = [];
         document.querySelectorAll('.win').forEach((el, i) => { att.push({ w: el.value, o: document.querySelectorAll('.oin')[i].value }); });
         monthData.att = att; 
@@ -534,7 +599,12 @@
         let m_y = ms.value + "_" + ys.value;
         let data = userDatabase[m_y];
         if (data) {
-            for(let id in data) { let el = document.getElementById(id); if(el && id !== 'att') el.value = data[id]; }
+            for(let id in data) { 
+                let el = document.getElementById(id); 
+                if(el && id !== 'att') {
+                    if(id !== 'dG_1' && id !== 'sDay') el.value = data[id]; // dG_1, sDay là auto
+                }
+            }
             if(data.att) {
                 const wins = document.querySelectorAll('.win'), oins = document.querySelectorAll('.oin');
                 data.att.forEach((item, i) => {
@@ -555,7 +625,16 @@
         inp.addEventListener('input', function() { formatMoney(this); calc(); });
     });
 
-    document.getElementById('sDay').addEventListener('input', calc);
+    // sDay là auto (calcStdDays), không cần listener nhập tay
+    // dG_1: người dùng có thể nhập thêm giờ thủ công; auto sẽ cộng thêm OT ngày nghỉ
+    let dG1_userEditing = false;
+    document.getElementById('dG_1').addEventListener('focus', function() { dG1_userEditing = true; });
+    document.getElementById('dG_1').addEventListener('blur', function() {
+        let val = parseFloat(this.value.replace(/,/g,'')) || 0;
+        this.setAttribute('data-manual', val);
+        dG1_userEditing = false;
+        calc();
+    });
     document.getElementById('userNameInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
     document.getElementById('passKey').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkLogin(); });
     ms.addEventListener('change', switchMonth); 

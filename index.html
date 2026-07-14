@@ -135,6 +135,7 @@
         </span>
         <button onclick="clearUserData()" style="float:right; cursor:pointer; background:#ff4d4d; color:white; border:none; padding:3px 10px; font-size:10px; margin-left: 10px;">Xóa dữ liệu cũ</button>
         <span id="userNameDisplay" style="float:right; font-weight:bold; color:#00b050;"></span>
+        <span id="syncStatus" style="float:right; font-size:10px; margin-right:15px; font-weight:bold;"></span>
     </div>
 
     <div id="attTable"></div>
@@ -270,6 +271,20 @@
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUH3godNdgOhHw0tNt0nOT4bJ9s0XXaVUovoCrF2hl8RHk7KymYK-fP5htWtHKpGHy/exec";
     let syncTimer = null;
+    let syncFailCount = 0;
+    let pendingSaveBody = null; // giữ payload lưu gần nhất để có thể "đẩy" khi đóng trang
+
+    // --- HIỂN THỊ TRẠNG THÁI ĐỒNG BỘ RÕ RÀNG (không còn âm thầm rơi về local nữa) ---
+    function setSyncStatus(type) {
+        const el = document.getElementById('syncStatus');
+        if (!el) return;
+        const now = new Date().toLocaleTimeString('vi-VN');
+        if (type === 'saving') { el.style.color = '#888'; el.innerText = '⏳ Đang lưu...'; }
+        else if (type === 'ok') { el.style.color = '#00b050'; el.innerText = '✅ Đã đồng bộ Cloud lúc ' + now; }
+        else if (type === 'error') { el.style.color = '#ff4d4d'; el.innerText = '❌ LỖI đồng bộ Cloud! Dữ liệu chỉ đang lưu tạm trên máy này (' + now + ')'; }
+        else if (type === 'local') { el.style.color = '#e69500'; el.innerText = '💾 Đã lưu tạm trên máy (chưa kết nối Cloud)'; }
+        else el.innerText = '';
+    }
 
     // --- CÁC HÀM XỬ LÝ GIAO DIỆN XÁC THỰC ---
     function toggleViewPass() {
@@ -455,17 +470,31 @@
                     if(v === 'n' && otVal > 2) tienAnDemAuto += 25000;
                 }
             } else if(isHolOrSpe) {
-                // Lễ/Xanh (kể cả T7): luôn tính 1 công vào a dù trống
+                // Lễ (đỏ/vàng/cam): luôn tính 1 công vào a dù trống (đúng luật LĐ, lễ hưởng lương dù không đi làm)
+                // Xanh (spe, không phải Lễ): CHỈ tính công khi có tích x/n/1/2x — KHÔNG tự động chấm công
                 const hasWork = v==='x' || v==='n' || v==='1/2x';
-                if(v === 'n') {
-                    cDem += 1; // đêm → sang hàng b
-                    if(otVal > 2) tienAnDemAuto += 25000;
-                } else if(v === '1/2x') {
-                    cNgay += 0.5;
-                } else {
-                    cNgay += 1; // trống hoặc x → 1 công ngày
+                if (isHolNotSpe) {
+                    // Ngày Lễ thật: giữ nguyên hành vi tự động cũ
+                    if(v === 'n') {
+                        cDem += 1; // đêm → sang hàng b
+                        if(otVal > 2) tienAnDemAuto += 25000;
+                    } else if(v === '1/2x') {
+                        cNgay += 0.5;
+                    } else {
+                        cNgay += 1; // trống hoặc x → 1 công Lễ
+                    }
+                } else if(hasWork) {
+                    // Ngày Xanh: chỉ cộng công khi người dùng đã tích
+                    if(v === 'n') {
+                        cDem += 1;
+                        if(otVal > 2) tienAnDemAuto += 25000;
+                    } else if(v === '1/2x') {
+                        cNgay += 0.5;
+                    } else {
+                        cNgay += 1;
+                    }
                 }
-                // Nếu đi làm thêm → công ngày nghỉ (hàng d)
+                // Nếu đi làm thêm (Lễ hoặc Xanh có tích) → công ngày nghỉ (hàng d)
                 if(hasWork) {
                     let baseDay = (v === '1/2x') ? 0.5 : 1;
                     let rate = isHolNotSpe ? 2 : 1;
@@ -558,21 +587,67 @@
         let m_y = ms.value + "_" + ys.value;
         userDatabase[m_y] = monthData;
         localStorage.setItem('db_user_' + currentUser, JSON.stringify(userDatabase));
-        if(SCRIPT_URL.startsWith("http")) {
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(() => { // debounce 2.5 giây
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ user: currentUser, data: JSON.stringify(userDatabase) }) });
-            }, 2500);
-        }
+
+        if(!SCRIPT_URL.startsWith("http")) { setSyncStatus('local'); return; }
+
+        const body = JSON.stringify({ user: currentUser, data: JSON.stringify(userDatabase) });
+        pendingSaveBody = body; // luôn giữ bản mới nhất để beforeunload có thể đẩy kịp
+        setSyncStatus('local');
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => { pushToCloud(body); }, 2500); // debounce 2.5 giây
     }
+
+    function pushToCloud(body) {
+        setSyncStatus('saving');
+        fetch(SCRIPT_URL, { method: 'POST', body: body })
+            .then(res => res.json().catch(() => ({}))) // một số deployment Apps Script không trả JSON hợp lệ
+            .then(() => { syncFailCount = 0; pendingSaveBody = null; setSyncStatus('ok'); })
+            .catch(err => {
+                syncFailCount++;
+                console.error('Lỗi đồng bộ Cloud:', err);
+                setSyncStatus('error');
+                // Thử lại tối đa vài lần, giãn cách tăng dần, tránh spam liên tục nếu URL sai hẳn
+                if (syncFailCount <= 3) {
+                    clearTimeout(syncTimer);
+                    syncTimer = setTimeout(() => pushToCloud(body), 5000 * syncFailCount);
+                }
+            });
+    }
+
+    // Nếu người dùng đóng tab/điều hướng đi trong lúc còn dữ liệu chưa kịp đồng bộ (debounce 2.5s),
+    // dùng sendBeacon để "đẩy nốt" thay vì để mất luôn lần lưu cuối.
+    window.addEventListener('beforeunload', () => {
+        if (pendingSaveBody && SCRIPT_URL.startsWith("http") && navigator.sendBeacon) {
+            navigator.sendBeacon(SCRIPT_URL, new Blob([pendingSaveBody], { type: 'text/plain;charset=UTF-8' }));
+        }
+    });
 
     function loadSavedData() {
         if (!currentUser) return;
+        setSyncStatus('saving');
         fetch(SCRIPT_URL + "?user=" + currentUser)
-        .then(res => res.json()).then(resData => {
-            if(resData.data) applyData(JSON.parse(resData.data));
-            else { let saved = localStorage.getItem('db_user_' + currentUser); if(saved) applyData(JSON.parse(saved)); }
-        }).catch(() => { let saved = localStorage.getItem('db_user_' + currentUser); if(saved) applyData(JSON.parse(saved)); });
+        .then(res => res.json())
+        .then(resData => {
+            if(resData.data) { applyData(JSON.parse(resData.data)); setSyncStatus('ok'); }
+            else {
+                // Tài khoản chưa có dữ liệu trên Cloud (bình thường với user mới) → dùng local nếu có
+                let saved = localStorage.getItem('db_user_' + currentUser);
+                if(saved) applyData(JSON.parse(saved));
+                setSyncStatus('ok');
+            }
+        })
+        .catch(err => {
+            console.error('Không tải được dữ liệu từ Cloud:', err);
+            let saved = localStorage.getItem('db_user_' + currentUser);
+            if(saved) {
+                applyData(JSON.parse(saved));
+                setSyncStatus('error');
+                alert('⚠️ KHÔNG kết nối được Google Sheet (kiểm tra lại đường link Apps Script hoặc mạng).\nĐang hiển thị dữ liệu lưu tạm gần nhất trên MÁY NÀY, có thể không phải bản mới nhất từ các thiết bị khác!');
+            } else {
+                setSyncStatus('error');
+                alert('⚠️ KHÔNG kết nối được Google Sheet VÀ máy này chưa có dữ liệu lưu tạm nào.\nNếu bạn đã từng nhập dữ liệu ở thiết bị/trình duyệt khác, dữ liệu đó vẫn an toàn trên Cloud — hãy kiểm tra lại đường link Apps Script (SCRIPT_URL) trong file.');
+            }
+        });
     }
 
     function applyData(db) {

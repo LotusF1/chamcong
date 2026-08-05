@@ -524,17 +524,17 @@
             }
         });
 
-        document.getElementById('rW').innerText = (cNgay + cDem).toLocaleString(); 
-        document.getElementById('dA').value = cNgay.toLocaleString();
-        document.getElementById('dB').value = cDem.toLocaleString();
-        document.getElementById('dD').value = cNghi.toLocaleString();
-        document.getElementById('rO').innerText = totalOT_Display.toLocaleString();
-        document.getElementById('dE').value = totalOT_Row.toLocaleString();
-        document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString();
+        document.getElementById('rW').innerText = (cNgay + cDem).toLocaleString('en-US'); 
+        document.getElementById('dA').value = cNgay.toLocaleString('en-US');
+        document.getElementById('dB').value = cDem.toLocaleString('en-US');
+        document.getElementById('dD').value = cNghi.toLocaleString('en-US');
+        document.getElementById('rO').innerText = totalOT_Display.toLocaleString('en-US');
+        document.getElementById('dE').value = totalOT_Row.toLocaleString('en-US');
+        document.getElementById('dG_12').value = totalPhucLoi_R.toLocaleString('en-US');
         // OT ngày nghỉ → hàng g (dG_1), chỉ auto
         const dG1El = document.getElementById('dG_1');
-        dG1El.value = totalOT_NghiRow.toLocaleString();
-        document.getElementById('v18').value = (cDem * 25000).toLocaleString();
+        dG1El.value = totalOT_NghiRow.toLocaleString('en-US');
+        document.getElementById('v18').value = (cDem * 25000).toLocaleString('en-US');
         document.getElementById('v19').value = tienAnDemAuto.toLocaleString('en-US');
 
         const bSal = parseN('bSal'), iSal = bSal + parseN('v26') + parseN('v27') + parseN('v28') + parseN('v29') + parseN('v30') + parseN('v31') + parseN('v32');
@@ -542,29 +542,29 @@
         const std = parseN('sDay') || 26, perH = iSal/std/8; 
         
         const sD = (iSal/std) * cNgay, sN = (iSal/std) * cDem * 1.5, sNghi = perH * 1.0 * cNghi, sO = perH * 1.5 * totalOT_Row;
-        document.getElementById('v1').value = Math.round(sD).toLocaleString();
-        document.getElementById('v2').value = Math.round(sN).toLocaleString();
-        document.getElementById('v3').value = Math.round(sNghi).toLocaleString();
-        document.getElementById('v4').value = Math.round(sO).toLocaleString();
+        document.getElementById('v1').value = Math.round(sD).toLocaleString('en-US');
+        document.getElementById('v2').value = Math.round(sN).toLocaleString('en-US');
+        document.getElementById('v3').value = Math.round(sNghi).toLocaleString('en-US');
+        document.getElementById('v4').value = Math.round(sO).toLocaleString('en-US');
 
         const rates = [1.5, 2.15, 2.0, 1.5, 3.0, 3.0, 4.1, 4.0, 6.0, 6.0, 6.05, 1.5];
         let totalTC_New = 0;
         for(let j=1; j<=12; j++){
             let val = Math.round(parseN('dG_'+j) * perH * rates[j-1]);
-            document.getElementById('v6_'+j).value = val.toLocaleString();
+            document.getElementById('v6_'+j).value = val.toLocaleString('en-US');
             totalTC_New += val;
         }
-        document.getElementById('v5').value = Math.round(parseN('dF') * perH * 2.15).toLocaleString();
-        document.getElementById('v13').value = Math.round(parseN('dO') * perH * 0.7).toLocaleString();
+        document.getElementById('v5').value = Math.round(parseN('dF') * perH * 2.15).toLocaleString('en-US');
+        document.getElementById('v13').value = Math.round(parseN('dO') * perH * 0.7).toLocaleString('en-US');
         
         const bhxh = Math.round(iSal*0.08), bhyt = Math.round(iSal*0.015), bhtn = Math.round(iSal*0.01);
-        document.getElementById('v33').value = bhxh.toLocaleString();
-        document.getElementById('v34').value = bhyt.toLocaleString();
-        document.getElementById('v35').value = bhtn.toLocaleString();
+        document.getElementById('v33').value = bhxh.toLocaleString('en-US');
+        document.getElementById('v34').value = bhyt.toLocaleString('en-US');
+        document.getElementById('v35').value = bhtn.toLocaleString('en-US');
 
         let thuNhapChung = sD + sN + sNghi + sO + parseN('v5') + totalTC_New + parseN('v13') + parseN('v14') + parseN('v23');
         let tnTruocThue = thuNhapChung + parseN('v18') + parseN('v19') - (bhxh+bhyt+bhtn);
-        document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString();
+        document.getElementById('taxI').value = Math.round(tnTruocThue).toLocaleString('en-US');
         
         // Giảm trừ gia cảnh từ 01/01/2026 (Nghị quyết 110/2025/UBTVQH15)
         // Bản thân: 15.500.000đ/tháng | Người phụ thuộc: 6.200.000đ/tháng
@@ -583,11 +583,11 @@
             else                              { rate = "35%"; tienThue = tnTinhThue * 0.35 - 14500000; }
         }
         document.getElementById('taxRate').value = rate;
-        document.getElementById('v38').value = Math.round(tienThue).toLocaleString();
+        document.getElementById('v38').value = Math.round(tienThue).toLocaleString('en-US');
 
         let totalPlus = thuNhapChung + parseN('v15') + parseN('v16') + parseN('v17') + parseN('v18') + parseN('v19') + parseN('v20') + parseN('v21') + parseN('v22') + parseN('v24') + parseN('v25');
         let totalMinus = (bhxh+bhyt+bhtn) + parseN('v36') + parseN('v37') + tienThue + parseN('v39') + parseN('v40') + parseN('v41') + parseN('v42');
-        document.getElementById('final').innerText = Math.round(totalPlus - totalMinus).toLocaleString();
+        document.getElementById('final').innerText = Math.round(totalPlus - totalMinus).toLocaleString('en-US');
         saveData(); 
     }
 
